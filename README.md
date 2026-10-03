@@ -45,6 +45,60 @@ Slides: [`docs/presentation/SalaryBridge.pptx`](docs/presentation/SalaryBridge.p
 Design documents: `plan.md` (how it works), `plot.md` (what users see), `prompt.md` (feature order), `CLAUDE.md`
 (build rules).
 
+Track: **03 · Customer Innovation & Financial Independence** (responsible credit readiness), with capital
+forecasting from the Merchant & Agent Intelligence track.
+
+## Features
+
+- **Employee (mobile-first):** earned-to-date and safe limit, one slider, offer with fee, total deduction and date,
+  plain-language reason, full Bangla (বাংলা) mode, advance history.
+- **Employer HR:** deduction notice and CSV for payday, one-click remittance confirmation, programme settings (limit,
+  on/off).
+- **upay Ops:** KPIs, capital forecast with P10–P90 band, human approval queue, kill switch, employer risk table with
+  reasons, borrowing-pattern monitor.
+- **Validation:** pre-declared targets with pass/fail, loss vs approval, calibration, fairness gaps, economics sliders.
+- **Simulator:** move time (+1 day, +7 days, jump to payday), Demo mode and seven scenarios (S1 happy path … S7 kill
+  switch); every user gets an isolated sandbox session.
+
+Where AI is used: M1–M5 (LightGBM, quantile LightGBM + conformal, IsolationForest, SHAP reasons) size, queue or
+monitor; Claude only rewrites the decision's facts into plain language. Details in [How it works](#how-it-works).
+
+## Technology stack
+
+| Layer | Used |
+|---|---|
+| Backend | Python 3.11, FastAPI, Pydantic, SQLAlchemy 2 (Core), SQLite, Uvicorn |
+| Data and ML | pandas, NumPy, SciPy, scikit-learn, LightGBM, SHAP, joblib |
+| Generative AI | Anthropic Claude API (`claude-opus-5-5`), optional, with deterministic templates as fallback |
+| Frontend | Next.js 16 (App Router, React 19, TypeScript), Tailwind CSS v4, Recharts |
+| Testing | pytest (229 tests), ESLint, TypeScript |
+| Hosting | Render (API, `render.yaml`), Vercel (frontend) |
+
+## Requirements
+
+- Python **3.11** (the models were pickled with the exact versions in `backend/requirements.txt`)
+- Node.js **20.9 or newer** and npm
+- About 1 GB of disk for dependencies and 400 MB of RAM for the API; no GPU
+- Optional: an Anthropic API key for LLM-worded explanations
+
+## Environment variables
+
+Defaults work for local use; nothing has to be set. Never commit real keys.
+
+| Where | Variable | Purpose | Default / example |
+|---|---|---|---|
+| Backend | `CORS_ORIGINS` | Comma-separated frontend origins allowed to call the API | `http://localhost:3000` |
+| Backend | `SEED` | Seed for the synthetic world | `42` |
+| Backend | `ANTHROPIC_API_KEY` | Enables LLM wording; empty = template explanations | `<your-key>` (optional) |
+| Backend | `LLM_MODEL`, `LLM_TIMEOUT_S` | Claude model and timeout before falling back | `claude-opus-5-5`, `20` |
+| Backend | `DATABASE_URL` | Seed database location | `sqlite:///<backend>/seed.db` |
+| Backend | `SIM_DIR`, `SESSION_TTL_HOURS` | Where sandbox sessions live and when idle ones are removed | system temp, `6` |
+| Backend | `POLICY__<NAME>` | Override any policy number in `docs/assumptions.md` | `POLICY__FEE_FLAT_BDT=49` |
+| Frontend | `NEXT_PUBLIC_API_BASE_URL` | API base URL, no trailing slash (build-time) | `http://localhost:8000` |
+
+Templates: `backend/.env.example` → `backend/.env`, `frontend/.env.example` → `frontend/.env.local`. Production values:
+[`docs/deploy.md`](docs/deploy.md#environment-variables).
+
 ## Backend (FastAPI, Python 3.11)
 
 ```bash
@@ -54,6 +108,8 @@ uv pip install --python .venv/Scripts/python.exe -r requirements-dev.txt
 .venv/Scripts/python.exe -m pytest
 .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
 ```
+
+Without `uv`: `py -3.11 -m venv .venv` then `.venv/Scripts/python.exe -m pip install -r requirements-dev.txt`.
 
 Test groups (all run by plain `pytest`):
 
@@ -87,6 +143,23 @@ npm run dev
 ```
 
 Open http://localhost:3000. The page shows the API health. Set `NEXT_PUBLIC_API_BASE_URL` (see `frontend/.env.example`) when the API is not on `http://localhost:8000`.
+
+Production build and checks:
+
+```bash
+npm run build
+npm start
+npm run lint
+```
+
+## Verify the features by hand
+
+1. Press **★ Demo mode**: Rahim can get up to ৳3,600 of ৳11,612 earned. Request it, read the reason, accept.
+2. **Employer HR**: Rahim's ৳3,625 is on the deduction notice. Press **Jump to payday**; the ledger stays
+   **✓ Reconciled**.
+3. **upay Ops**: run **S6 · Eid surge**; the forecast need rises above the pool and new requests go to the queue.
+4. **S5 · Chronic borrower** shows a supportive cooling-off; **S7 · Kill switch** blocks new requests.
+5. **Validation**: targets, charts and the economics sliders, all read from generated files.
 
 ## Deploy
 
