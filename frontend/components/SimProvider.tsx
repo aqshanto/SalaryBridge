@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { api, post, type ScenarioResult, type SimEvent, type SimState } from "@/lib/api";
@@ -15,6 +16,8 @@ type SimContextValue = {
   events: SimEvent[];
   version: number; // bumps after every simulation change so views can refetch
   epoch: number; // bumps when time moves, a scenario runs or the session resets (not on a plain refresh)
+  demoEpoch: number; // bumps only on Demo mode: views return to their demo defaults (Rahim)
+  demoMode: () => Promise<void>;
   busy: boolean;
   error: string | null;
   guide: ScenarioResult | null;
@@ -41,6 +44,8 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<SimEvent[]>([]);
   const [version, setVersion] = useState(0);
   const [epoch, setEpoch] = useState(0);
+  const [demoEpoch, setDemoEpoch] = useState(0);
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guide, setGuide] = useState<ScenarioResult | null>(null);
@@ -132,6 +137,12 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
     [guarded, apply, sessionId],
   );
 
+  const demoMode = useCallback(async () => {
+    await reset();
+    setDemoEpoch((d) => d + 1);
+    router.push("/employee");
+  }, [reset, router]);
+
   const value = useMemo<SimContextValue>(
     () => ({
       sessionId,
@@ -142,6 +153,8 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
       events,
       version,
       epoch,
+      demoEpoch,
+      demoMode,
       busy,
       error,
       guide,
@@ -152,7 +165,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
       runScenario,
       refresh,
     }),
-    [sessionId, lang, setLang, state, events, version, epoch, busy, error, guide, advance, jumpToPayday, reset, runScenario, refresh],
+    [sessionId, lang, setLang, state, events, version, epoch, demoEpoch, demoMode, busy, error, guide, advance, jumpToPayday, reset, runScenario, refresh],
   );
 
   return <SimContext.Provider value={value}>{children}</SimContext.Provider>;
