@@ -4,6 +4,10 @@
 AI sizes the advance and explains it in English or Bangla; on payday the employer sends upay one bulk transfer from a
 ready-made deduction list. Built for the DIU CPC × upay AI Hackathon 2026. **All data is synthetic.**
 
+**Live demo: [salary-bridge-iota.vercel.app](https://salary-bridge-iota.vercel.app)** · API:
+[salarybridge-api.onrender.com/health](https://salarybridge-api.onrender.com/health). The API runs on Render's free
+plan and sleeps after 15 idle minutes, so the first request can take about a minute; press **★ Demo mode** to start.
+
 | Employee (phone) | Offer with reason | বাংলা |
 |---|---|---|
 | ![Employee home](docs/screenshots/employee-home.png) | ![Offer](docs/screenshots/employee-offer.png) | ![Bangla offer](docs/screenshots/employee-offer-bn.png) |
