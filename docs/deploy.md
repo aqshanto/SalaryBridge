@@ -11,25 +11,12 @@ Both need your own accounts; nothing here is deployed automatically.
 - `next build` with `NEXT_PUBLIC_API_BASE_URL` pointing at that API; every page served, the full flow worked, and CORS
   allowed only the configured frontend origin.
 
-## 1. Push the latest code to GitHub
+## 1. The code on GitHub
 
-The project already lives at `https://github.com/aqshanto/SalaryBridge` (branch `main`). Commit and push the
-deployment files (`render.yaml`, `backend/.python-version`, `backend/requirements*.txt`, `docs/deploy.md`):
-
-```bash
-git add render.yaml backend/.python-version backend/requirements.txt backend/requirements-dev.txt docs/deploy.md README.md
-```
-
-```bash
-git commit -m "Add Render and Vercel deployment config"
-```
-
-```bash
-git push
-```
-
-`seed.db`, `.venv/`, `node_modules/`, `.next/` and `.env` files are git-ignored. The trained models in
-`backend/artifacts/` (11 MB) **are** committed; the API needs them.
+The project lives at `https://github.com/aqshanto/SalaryBridge` (branch `main`) and already contains everything both
+hosts need: `render.yaml`, `backend/.python-version`, the pinned `backend/requirements.txt` and the trained models in
+`backend/artifacts/` (11 MB, committed on purpose; the API loads them at startup). `seed.db`, `.venv/`,
+`node_modules/`, `.next/` and `.env` files are git-ignored and must stay that way.
 
 ## 2. Backend on Render
 
@@ -56,6 +43,36 @@ git push
 
 On Render → your service → **Environment** → set `CORS_ORIGINS` to the Vercel URL (comma-separate several, e.g. the
 production URL and a preview URL). Save; Render redeploys.
+
+## Environment variables
+
+### Render (backend)
+
+| Variable | Value | Required | Notes |
+|---|---|---|---|
+| `PYTHON_VERSION` | `3.11.9` | yes | Set by `render.yaml`. The models were pickled on 3.11; Render's default is newer. |
+| `CORS_ORIGINS` | `https://<your-app>.vercel.app` | yes | Exact origin, no trailing slash. Comma-separate several (production, preview). |
+| `SEED` | `42` | yes | Set by `render.yaml`. The same seed always builds the same synthetic world. |
+| `ANTHROPIC_API_KEY` | your key | no | Enables the "AI wording" button. Without it the template explanation is used. Set it only in the Render dashboard; never commit it. |
+| `LLM_MODEL` | `claude-opus-5-5` | no | Set by `render.yaml`. |
+| `LLM_TIMEOUT_S` | `20` | no | Seconds before the explanation falls back to the template. |
+| `SESSION_TTL_HOURS` | `6` | no | Idle sandbox sessions are deleted after this. |
+| `SIM_DIR` | (unset) | no | Folder for per-session databases; defaults to a temp folder. |
+| `DATABASE_URL` | (unset) | no | Leave unset: the seed database is built next to the code at startup. |
+| `POLICY__<NAME>` | e.g. `POLICY__FEE_FLAT_BDT=49` | no | Overrides any policy number in `docs/assumptions.md` (double underscore). |
+
+`PORT` is provided by Render and used by the start command; do not set it.
+
+### Vercel (frontend)
+
+| Variable | Value | Required | Notes |
+|---|---|---|---|
+| `NEXT_PUBLIC_API_BASE_URL` | `https://<your-service>.onrender.com` | yes | No trailing slash. Read at build time: redeploy after changing it. Set it for Production (and Preview if you use preview URLs). |
+
+### Local development
+
+`backend/.env.example` and `frontend/.env.example` hold the local defaults (`http://localhost:8000` and
+`http://localhost:3000`). Copy them to `.env` / `.env.local` only if you need to change something.
 
 ## 5. Demo day checklist
 
