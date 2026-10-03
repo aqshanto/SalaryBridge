@@ -26,6 +26,7 @@ from app.ml import m5_abuse as m5
 from app.rules import EmployeeContext, EmployerContext, HistoryContext, RequestContext, evaluate, fee_for
 from app.rules.abuse import AbuseFlags, route
 from app.rules.tiers import apply_attrition, tier_for, tiered_amount
+from app.services.capital import forecast as capital_forecast
 from app.sim.session import SimSession, sim_decisions
 
 CARRY_OVER_LOOKBACK_DAYS = 30
@@ -267,6 +268,19 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
         status, approved = "offered", auto_amount
     if approved < int(amount_bdt) and status == "offered" and not any(r.code == "AMOUNT_REDUCED_TO_LIMIT" for r in reasons):
         reasons.append(Reason("AMOUNT_REDUCED_TO_LIMIT", "tier", "limit", f"Requested {amount_bdt} BDT, offered {approved} BDT"))
+
+    # --- M4: is there enough money in the pool for this month's forecast need?
+    capital = capital_forecast(session)
+    if status == "offered" and (capital["pool_below_required"] or approved > capital["pool_bdt"]):
+        status, needs_human = "queued", True
+        reasons.append(
+            Reason(
+                "POOL_BELOW_FORECAST",
+                "m4",
+                "review",
+                f"Pool {capital['pool_bdt']} BDT is below this month's forecast need {capital['current_required_pool_bdt']} BDT (P90 + buffer)",
+            )
+        )
     fee = fee_for(approved, policy)
 
     decision = Decision(
@@ -284,9 +298,11 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
             "prob_leave": round(p_leave, 4),
             "anomaly_score": flags.anomaly_score,
             "unusual_pattern": flags.unusual_pattern,
+            "pool_bdt": capital["pool_bdt"],
+            "required_pool_bdt": capital["current_required_pool_bdt"],
         },
         reasons=reasons,
-        model_versions={"m1": m1_model.version, "m2": m2_model.version, "m3": m3_model.version, "m5": m5_model.version},
+        model_versions={"m1": m1_model.version, "m2": m2_model.version, "m3": m3_model.version, "m4": capital["model_version"], "m5": m5_model.version},
         **base,
     )
     inputs.update(

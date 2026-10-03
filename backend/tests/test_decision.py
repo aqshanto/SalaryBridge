@@ -42,7 +42,7 @@ def test_s1_rahim_happy_path_is_offered(client, personas):
     assert 0 < d["approved_amount_bdt"] <= d["hard_cap_bdt"] == 3_600
     assert d["total_due_bdt"] == d["approved_amount_bdt"] + d["fee_bdt"]
     assert "SALARY_CAP_LIMIT" in codes(d, "rule")
-    assert set(d["model_versions"]) == {"m1", "m2", "m3", "m5"}
+    assert set(d["model_versions"]) == {"m1", "m2", "m3", "m4", "m5"}
 
 
 def test_asking_for_the_full_limit_is_not_treated_as_leaving(client, personas):

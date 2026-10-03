@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.routers.sim import get_session
-from app.services import advances
+from app.services import advances, capital, employers
 from app.sim.session import SimSession
 
 router = APIRouter(prefix="/ops", tags=["ops"])
@@ -50,3 +50,13 @@ def reviews(session: SimSession = Depends(get_session)) -> list[dict]:
 def kill_switch(body: KillSwitchIn, session: SimSession = Depends(get_session)) -> dict:
     session.set_kill_switch(body.on)
     return {"kill_switch": session.kill_switch}
+
+
+@router.get("/capital-forecast")
+def capital_forecast(session: SimSession = Depends(get_session)) -> dict:
+    return capital.forecast(session)
+
+
+@router.get("/employers")
+def employer_risk(session: SimSession = Depends(get_session)) -> list[dict]:
+    return employers.employer_table(session)

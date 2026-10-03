@@ -195,18 +195,20 @@ class EmployerRiskModel:
             values = values[1]
         out = []
         for row in np.asarray(values):
-            ranked = [i for i in np.argsort(-np.abs(row)) if self.features[i] in REASONS][:top]
-            out.append(
-                [
-                    {
-                        "feature": self.features[i],
-                        "code": REASONS[self.features[i]][0 if row[i] > 0 else 1],
-                        "direction": "raises_risk" if row[i] > 0 else "lowers_risk",
-                        "shap": round(float(row[i]), 4),
-                    }
-                    for i in ranked
-                ]
-            )
+            seen, items = set(), []
+            for i in np.argsort(-np.abs(row)):
+                if self.features[i] not in REASONS:
+                    continue
+                code = REASONS[self.features[i]][0 if row[i] > 0 else 1]
+                if code in seen:  # two features can map to the same reason; show it once
+                    continue
+                seen.add(code)
+                items.append(
+                    {"feature": self.features[i], "code": code, "direction": "raises_risk" if row[i] > 0 else "lowers_risk", "shap": round(float(row[i]), 4)}
+                )
+                if len(items) == top:
+                    break
+            out.append(items)
         return out
 
 

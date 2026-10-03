@@ -152,6 +152,24 @@ class SimSession:
             conn.execute(delete(sim_overrides).where(sim_overrides.c.employer_id == employer_id, sim_overrides.c.work_month == work_month))
             conn.execute(insert(sim_overrides).values(employer_id=employer_id, work_month=work_month, status=status, delay_days=delay_days, paid_share=paid_share))
 
+    @property
+    def extra_eid_months(self) -> list[str]:
+        with self.engine.connect() as conn:
+            value = conn.execute(select(sim_meta.c.value).where(sim_meta.c.key == "extra_eid_months")).scalar_one_or_none()
+        return sorted(m for m in (value or "").split(",") if m)
+
+    def add_eid_months(self, months: list[str]) -> None:
+        value = ",".join(sorted(set(self.extra_eid_months) | set(months)))
+        with self.engine.begin() as conn:
+            conn.execute(delete(sim_meta).where(sim_meta.c.key == "extra_eid_months"))
+            conn.execute(insert(sim_meta).values(key="extra_eid_months", value=value))
+
+    def set_pool(self, target_bdt: int, memo: str) -> None:
+        """Move money between upay_capital and the advance pool so the pool holds `target_bdt`."""
+        diff = bdt_to_paisa(int(target_bdt)) - self.ledger.balance("upay_pool")
+        if diff:
+            self.ledger.post_entry(self.sim_date, "pool_adjustment", [("upay_pool", diff), ("upay_capital", -diff)], memo=memo)
+
     def next_payday(self, employer_id: str | None = None) -> date:
         ids = [employer_id] if employer_id else self.open_employer_ids()
         if not ids:

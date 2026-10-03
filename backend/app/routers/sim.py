@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from app.config import get_settings
+from app.services import scenarios
 from app.sim.session import MAX_ADVANCE_DAYS, SessionError, SimSession
 from app.sim.world import load_world
 
@@ -14,6 +15,11 @@ class AdvanceTimeIn(BaseModel):
 
 class JumpToPaydayIn(BaseModel):
     employer_id: str | None = None
+
+
+class ScenarioIn(BaseModel):
+    name: str = Field(min_length=2, max_length=40)
+    reset: bool = True
 
 
 def _session(session_id: str) -> SimSession:
@@ -52,3 +58,11 @@ def jump_to_payday(body: JumpToPaydayIn | None = None, session: SimSession = Dep
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     events = session.advance_to(target)
     return {"state": session.state(), "events": events}
+
+
+@router.post("/scenario")
+def scenario(body: ScenarioIn, session: SimSession = Depends(get_session)) -> dict:
+    try:
+        return scenarios.run(session, body.name, body.reset)
+    except scenarios.ScenarioError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
