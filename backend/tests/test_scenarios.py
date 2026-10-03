@@ -146,3 +146,16 @@ def test_reset_false_keeps_the_current_state(full_client):
     scenario(full_client, "s7")
     s = scenario(full_client, "s5", reset=False)
     assert s["state"]["kill_switch"] is True  # S7's kill switch is still on
+
+
+@pytest.mark.parametrize("name", ["s1", "s2", "s3", "s4", "s5", "s6", "s7"])
+def test_every_scenario_guide_has_a_matching_bangla_version(full_client, name):
+    s = scenario(full_client, name)
+    assert s["bn"]["title"] and s["bn"]["title"] != s["title"]
+    for key in ("setup", "try", "expect"):
+        assert len(s["bn"][key]) == len(s[key]), key
+    # Amounts and dates use Bangla digits; IDs such as E007 / L000001 and the term P90 stay as they are.
+    import re
+
+    text = re.sub(r"\b(?:[A-Z]\d+|P90)\b", "", " ".join(s["bn"]["setup"] + s["bn"]["try"]))
+    assert not re.search(r"[0-9]", text), text
