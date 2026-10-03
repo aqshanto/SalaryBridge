@@ -1,5 +1,5 @@
-import { Placeholder } from "@/components/Placeholder";
+import { EmployeeView } from "@/components/employee/EmployeeView";
 
 export default function Page() {
-  return <Placeholder role="employee" />;
+  return <EmployeeView />;
 }

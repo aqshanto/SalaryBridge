@@ -14,6 +14,7 @@ type SimContextValue = {
   state: SimState | null;
   events: SimEvent[];
   version: number; // bumps after every simulation change so views can refetch
+  epoch: number; // bumps when time moves, a scenario runs or the session resets (not on a plain refresh)
   busy: boolean;
   error: string | null;
   guide: ScenarioResult | null;
@@ -39,6 +40,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<SimState | null>(null);
   const [events, setEvents] = useState<SimEvent[]>([]);
   const [version, setVersion] = useState(0);
+  const [epoch, setEpoch] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guide, setGuide] = useState<ScenarioResult | null>(null);
@@ -91,6 +93,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
     (days: number) =>
       guarded(async () => {
         const body = await post<{ state: SimState; events: SimEvent[] }>("/sim/advance-time", sessionId, { days });
+        setEpoch((e) => e + 1);
         apply(body.state, body.events);
       }),
     [guarded, apply, sessionId],
@@ -100,6 +103,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
     () =>
       guarded(async () => {
         const body = await post<{ state: SimState; events: SimEvent[] }>("/sim/jump-to-payday", sessionId, {});
+        setEpoch((e) => e + 1);
         apply(body.state, body.events);
       }),
     [guarded, apply, sessionId],
@@ -110,6 +114,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
       guarded(async () => {
         setEvents([]);
         setGuide(null);
+        setEpoch((e) => e + 1);
         apply(await post<SimState>("/sim/reset", sessionId));
       }),
     [guarded, apply, sessionId],
@@ -121,6 +126,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
         const result = await post<ScenarioResult>("/sim/scenario", sessionId, { name });
         setEvents([]);
         setGuide(result);
+        setEpoch((e) => e + 1);
         apply(result.state);
       }),
     [guarded, apply, sessionId],
@@ -135,6 +141,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
       state,
       events,
       version,
+      epoch,
       busy,
       error,
       guide,
@@ -145,7 +152,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
       runScenario,
       refresh,
     }),
-    [sessionId, lang, setLang, state, events, version, busy, error, guide, advance, jumpToPayday, reset, runScenario, refresh],
+    [sessionId, lang, setLang, state, events, version, epoch, busy, error, guide, advance, jumpToPayday, reset, runScenario, refresh],
   );
 
   return <SimContext.Provider value={value}>{children}</SimContext.Provider>;

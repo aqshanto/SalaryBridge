@@ -64,6 +64,8 @@ def test_accepted_advance_feeds_the_next_decision(client, people):
     second = offer(client, people["rahim"], 1_000)
     assert second["status"] == "declined"
     assert "CAP_BELOW_MINIMUM" in [r["code"] for r in second["reasons"] if r["direction"] == "decline"]
+    assert "LIMIT_ALREADY_USED" in [r["code"] for r in second["reasons"]]
+    assert "limit_used" in second["explanation"]["points"]
 
 
 def test_offers_expire_when_time_moves_or_a_newer_advance_exists(client, people):

@@ -89,6 +89,7 @@ def test_risk_points_only_when_the_tier_was_lowered():
         ("EMPLOYER_CLOSED", "employer_closed"),
         ("EMPLOYEE_NOT_ACTIVE", "not_active"),
         ("CAP_BELOW_MINIMUM", "not_enough_earned"),
+        ("LIMIT_ALREADY_USED", "limit_used"),
         ("TENURE_TOO_SHORT", "tenure"),
     ],
 )

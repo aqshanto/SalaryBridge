@@ -63,6 +63,10 @@ POINTS = {
     "not_joined": ("Your employer has not joined this service yet.", "আপনার প্রতিষ্ঠান এখনো এই সেবায় যোগ দেয়নি।"),
     "tenure": ("Advances are available after {min_tenure} days with your employer.", "প্রতিষ্ঠানে {min_tenure} দিন কাজ করার পর আগাম পাওয়া যায়।"),
     "monthly_count": ("You have already used this month's advances.", "এ মাসের আগাম আপনি ইতিমধ্যে নিয়েছেন।"),
+    "limit_used": (
+        "You already have an advance that uses this month's limit. You can ask again after it is repaid on payday.",
+        "এ মাসের সীমার আগাম আপনি ইতিমধ্যে নিয়েছেন। বেতনের দিনে তা পরিশোধ হলে আবার চাইতে পারবেন।",
+    ),
     "not_enough_earned": ("Not enough salary has been earned yet this month for an advance. Please try again later in the month.", "এ মাসে আগামের জন্য যথেষ্ট বেতন এখনো জমা হয়নি। মাসের শেষের দিকে আবার চেষ্টা করুন।"),
     "too_small": ("The smallest advance is {min_advance} BDT.", "সবচেয়ে ছোট আগাম {min_advance} টাকা।"),
 }
@@ -76,6 +80,7 @@ DECLINE_POINTS = [
     ("COOLING_OFF", "cooling_off"),
     ("TENURE_TOO_SHORT", "tenure"),
     ("MONTHLY_COUNT_LIMIT", "monthly_count"),
+    ("LIMIT_ALREADY_USED", "limit_used"),
     ("CAP_BELOW_MINIMUM", "not_enough_earned"),
     ("AMOUNT_BELOW_MINIMUM", "too_small"),
 ]

@@ -30,6 +30,7 @@ from app.services.capital import forecast as capital_forecast
 from app.sim.session import SimSession, sim_decisions
 
 CARRY_OVER_LOOKBACK_DAYS = 30
+PREVIEW_ID = "PREVIEW"
 INFORMATIVE_RULE_CODES = {"SALARY_CAP_LIMIT", "EARNED_DAYS_LIMIT", "CARRY_OVER_REDUCTION", "AMOUNT_REDUCED_TO_LIMIT", "LARGE_AMOUNT_REVIEW"}
 
 
@@ -138,7 +139,8 @@ def _requests_history(session: SimSession, employee_id: str, history: pd.DataFra
     return pd.concat([seed, live_req], ignore_index=True)
 
 
-def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: PolicyParams) -> Decision:
+def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: PolicyParams, preview: bool = False) -> Decision:
+    """Run the full decision. preview=True runs the same pipeline without logging it (for 'you can get up to')."""
     world = session.world
     if employee_id not in world.employees.index:
         raise DecisionError(f"Unknown or inactive employee: {employee_id}")
@@ -152,10 +154,11 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
 
     history = _employee_history(session, employee_id)
     live = session.advances_df(employee_id)
+    history_ctx = _history_context(history, live, as_of)
     rules = evaluate(
         EmployerContext(employer["employer_id"], int(employer["payroll_day"]), bool(employer["opted_in"]), closed),
         EmployeeContext(employee_id, int(person["salary_bdt"]), pd.Timestamp(person["hire_date"]).date(), left is None or left > as_of),
-        _history_context(history, live, as_of),
+        history_ctx,
         RequestContext(as_of=as_of, amount_bdt=int(amount_bdt), kill_switch=session.kill_switch),
         policy,
     )
@@ -179,10 +182,13 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
     inputs: dict = {"rule_result": {k: v for k, v in asdict(rules).items() if k != "trace"}, "rule_trace": [asdict(t) for t in rules.trace]}
 
     if not rules.eligible:
+        if "CAP_BELOW_MINIMUM" in rules.decline_codes and history_ctx.outstanding_bdt > 0:
+            # Same rule code, different story for the person: the limit is used up, not "not earned yet".
+            reasons.append(Reason("LIMIT_ALREADY_USED", "rule", "info", f"{history_ctx.outstanding_bdt} BDT from an earlier advance is still owed"))
         if "COOLING_OFF" in rules.decline_codes:
             reasons.append(Reason("CHRONIC_BORROWING", "rule", "info", "Advances in several months in a row: a one-month pause protects the borrower"))
         decision = Decision(
-            decision_id=session.next_id(sim_decisions, "D"),
+            decision_id=PREVIEW_ID if preview else session.next_id(sim_decisions, "D"),
             status="declined",
             max_amount_bdt=0,
             approved_amount_bdt=0,
@@ -194,7 +200,7 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
             reasons=reasons,
             **base,
         )
-        return _log(session, decision, inputs)
+        return decision if preview else _log(session, decision, inputs)
 
     # --- M1: employer payroll risk on the decision date
     m1_model, m2_model, m3_model, m5_model = m1.load_model(), m2.load_model(), m3.load_model(), m5.load_model()
@@ -284,7 +290,7 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
     fee = fee_for(approved, policy)
 
     decision = Decision(
-        decision_id=session.next_id(sim_decisions, "D"),
+        decision_id=PREVIEW_ID if preview else session.next_id(sim_decisions, "D"),
         status=status,
         max_amount_bdt=max_amount,
         approved_amount_bdt=approved,
@@ -312,7 +318,7 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
             "m5_features": m5_rows.iloc[0].to_dict() if not m5_rows.empty else None,
         }
     )
-    return _log(session, decision, inputs)
+    return decision if preview else _log(session, decision, inputs)
 
 
 def _log(session: SimSession, decision: Decision, inputs: dict) -> Decision:

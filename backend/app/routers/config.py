@@ -9,4 +9,4 @@ router = APIRouter(prefix="/config", tags=["config"])
 def public_config() -> dict:
     """Non-secret settings: the seed and every policy parameter."""
     settings = get_settings()
-    return {"seed": settings.seed, "policy": settings.policy.model_dump()}
+    return {"seed": settings.seed, "policy": settings.policy.model_dump(), "llm_enabled": bool(settings.anthropic_api_key)}

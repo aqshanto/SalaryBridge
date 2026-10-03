@@ -78,3 +78,59 @@ export type ScenarioResult = {
   expect: string[];
   state: SimState;
 };
+
+export type Persona = { key: string; name: string; story: string; employee_id: string; employer_id: string; industry: string; salary_bdt: number; hire_date: string };
+
+export type Reason = { code: string; source: string; direction: string; detail: string };
+
+export type Explanation = { en: string; bn: string; source: "template" | "llm"; fallback_reason?: string | null; points?: string[] };
+
+export type Decision = {
+  decision_id: string;
+  status: "offered" | "queued" | "declined";
+  employee_id: string;
+  requested_bdt: number;
+  hard_cap_bdt: number;
+  max_amount_bdt: number;
+  approved_amount_bdt: number;
+  fee_bdt: number;
+  total_due_bdt: number;
+  repayment_date: string;
+  tier: string | null;
+  reasons: Reason[];
+  explanation: Explanation;
+};
+
+export type Accepted = { advance_id: string; amount_bdt: number; fee_bdt: number; total_due_bdt: number; due_date: string; wallet_balance_bdt: string };
+
+export type HistoryItem = {
+  advance_id: string;
+  issue_date: string;
+  amount_bdt: number;
+  fee_bdt: number;
+  due_date: string;
+  status: string;
+  settled_via: string[];
+  on_time: boolean | null;
+  source: "live" | "history";
+};
+
+export type EmployeeSummary = {
+  employee_id: string;
+  employer_name: string;
+  salary_bdt: number;
+  salary_to_upay: boolean;
+  days_worked: number;
+  days_in_month: number;
+  earned_to_date_bdt: number;
+  available_bdt: number;
+  hard_cap_bdt: number;
+  min_advance_bdt: number;
+  fee_bdt: number;
+  next_deduction_date: string;
+  preview_status: "offered" | "queued" | "declined";
+  preview_message: { en: string; bn: string } | null;
+  wallet_bdt: string;
+  active: boolean;
+  history: HistoryItem[];
+};
