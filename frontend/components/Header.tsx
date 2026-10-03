@@ -18,7 +18,7 @@ export function Header() {
           <div className="text-lg font-semibold tracking-tight">{t.appName}</div>
           <div className="text-xs text-muted">{t.tagline}</div>
         </div>
-        <nav aria-label="Role" className="order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
+        <nav aria-label="Role" className="order-3 grid w-full grid-cols-2 gap-1 sm:order-none sm:flex sm:w-auto">
           {ROLES.map((role) => {
             const active = pathname.startsWith(`/${role}`);
             return (
@@ -26,7 +26,7 @@ export function Header() {
                 key={role}
                 href={`/${role}`}
                 aria-current={active ? "page" : undefined}
-                className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`whitespace-nowrap rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors ${
                   active ? "bg-accent text-white" : "text-muted hover:bg-accent-soft hover:text-ink"
                 }`}
               >
