@@ -21,7 +21,7 @@ Create the folder structure from `plan.md` §6.
 
 **Backend**
 - FastAPI app with `/health` returning `{status, version, seed}`.
-- `app/config.py` using pydantic-settings: `SEED`, `DATABASE_URL`, `CORS_ORIGINS`, `ANTHROPIC_API_KEY` (optional), `LLM_MODEL` (default `claude-haiku-4-5-20251001`).
+- `app/config.py` using pydantic-settings: `SEED`, `DATABASE_URL`, `CORS_ORIGINS`, `ANTHROPIC_API_KEY` (optional), `LLM_MODEL` (default `claude-opus-5-5`).
 - `requirements.txt`; a pytest test for `/health`.
 
 **Frontend**

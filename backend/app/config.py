@@ -61,7 +61,8 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{(BACKEND_DIR / 'seed.db').as_posix()}"
     cors_origins: str = "http://localhost:3000"
     anthropic_api_key: str | None = None
-    llm_model: str = "claude-haiku-4-5-20251001"
+    llm_model: str = "claude-opus-5-5"
+    llm_timeout_s: float = 20.0
     policy: PolicyParams = PolicyParams()
 
     # Simulation sessions (one SQLite file per browser session)

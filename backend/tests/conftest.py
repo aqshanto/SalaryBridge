@@ -33,6 +33,7 @@ def sim_env(small_seed_url, tmp_path, monkeypatch):
     """Point the app at the small seed and a private sessions folder."""
     monkeypatch.setenv("DATABASE_URL", small_seed_url)
     monkeypatch.setenv("SIM_DIR", str(tmp_path / "sessions"))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")  # tests never call the real API
     for cached in CACHES:
         cached.cache_clear()
     yield get_settings()
@@ -47,6 +48,7 @@ def full_client(full_seed_url, tmp_path_factory):
     with pytest.MonkeyPatch.context() as mp:
         mp.setenv("DATABASE_URL", full_seed_url)
         mp.setenv("SIM_DIR", str(tmp_path_factory.mktemp("sessions")))
+        mp.setenv("ANTHROPIC_API_KEY", "")  # tests never call the real API
         for cached in CACHES:
             cached.cache_clear()
         yield TestClient(app)
