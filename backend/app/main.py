@@ -10,6 +10,7 @@ from app.routers import employee as employee_router
 from app.routers import employer as employer_router
 from app.routers import ops as ops_router
 from app.routers import sim as sim_router
+from app.routers import validation as validation_router
 from data.seed import ensure_seed_db
 
 
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(ops_router.router)
     app.include_router(employer_router.router)
     app.include_router(employee_router.router)
+    app.include_router(validation_router.router)
 
     @app.get("/health")
     def health() -> dict:

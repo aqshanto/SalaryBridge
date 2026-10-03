@@ -51,6 +51,17 @@
         "m2_m3_combined_rank": 0.0066
       }
     },
+    "economics_base": {
+      "world_months": 15,
+      "advances_ml": 6822,
+      "funds_ml_bdt": 24745300,
+      "loss_ml_bdt": 153714,
+      "advances_flat": 7560,
+      "funds_flat_bdt": 29710100,
+      "loss_flat_bdt": 283027,
+      "avg_days_outstanding": 13.43,
+      "mean_monthly_funds_ml_bdt": 1649686
+    },
     "recovery_share_by_step_flat_cap": {
       "employer_remittance": 0.9855,
       "wallet_debit": 0.0024,
@@ -297,6 +308,17 @@
         "m3_rank": 0.0115,
         "m2_m3_combined_rank": 0.0143
       }
+    },
+    "economics_base": {
+      "world_months": 15,
+      "advances_ml": 8612,
+      "funds_ml_bdt": 22420100,
+      "loss_ml_bdt": 296732,
+      "advances_flat": 10403,
+      "funds_flat_bdt": 34149100,
+      "loss_flat_bdt": 533875,
+      "avg_days_outstanding": 18.57,
+      "mean_monthly_funds_ml_bdt": 1494673
     },
     "recovery_share_by_step_flat_cap": {
       "employer_remittance": 0.9764,

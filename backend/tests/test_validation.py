@@ -63,3 +63,14 @@ def test_validation_runs_end_to_end(tmp_path):
     out = validate.main(seeds=(42,), out=tmp_path / "v.json", report=tmp_path / "r.md")
     assert (tmp_path / "r.md").read_text(encoding="utf-8").startswith("# Validation Report")
     assert out["targets"]
+
+
+def test_validation_endpoint_serves_the_generated_file(result):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    body = TestClient(app).get("/validation").json()
+    assert body["targets"] == result["targets"]
+    assert {"world_months", "advances_ml", "funds_ml_bdt", "loss_ml_bdt", "avg_days_outstanding"} <= set(body["profile_a"]["economics_base"])
+    assert body["policy"]["fee_flat_bdt"] == 25

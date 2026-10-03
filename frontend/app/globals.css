@@ -14,6 +14,9 @@
   --warn-soft: #fdf1dc;
   --bad: #b42318;
   --bad-soft: #fde8e6;
+  /* two-series categorical pair, validated with the dataviz palette checker (light) */
+  --series-a: #00876a;
+  --series-b: #6a4fd6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,6 +34,9 @@
     --warn-soft: #3a2a10;
     --bad: #ff8a80;
     --bad-soft: #3d1714;
+    /* validated against the dark surface */
+    --series-a: #2aa588;
+    --series-b: #8b78ee;
   }
 }
 
@@ -48,6 +54,8 @@
   --color-warn-soft: var(--warn-soft);
   --color-bad: var(--bad);
   --color-bad-soft: var(--bad-soft);
+  --color-series-a: var(--series-a);
+  --color-series-b: var(--series-b);
   --font-sans: var(--font-geist-sans), var(--font-bengali), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }

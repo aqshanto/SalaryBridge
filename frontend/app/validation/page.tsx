@@ -1,5 +1,5 @@
-import { Placeholder } from "@/components/Placeholder";
+import { ValidationView } from "@/components/validation/ValidationView";
 
 export default function Page() {
-  return <Placeholder role="validation" />;
+  return <ValidationView />;
 }

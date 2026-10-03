@@ -79,6 +79,10 @@ def _world(profile: str, seed: int, m1_model, policy) -> tuple[pd.DataFrame, pd.
 
     reps = tables["repayments"]
     reps = reps[reps["advance_id"].isin(test["advance_id"])]
+    # How long money stays out: issue date to the date the advance was settled (or written off).
+    adv = tables["advances"].set_index("advance_id")
+    days_out = (pd.to_datetime(adv["settled_date"]) - pd.to_datetime(adv["issue_date"])).dt.days
+    test["days_out"] = test["advance_id"].map(days_out).astype(float)
     return test, req, reps
 
 
@@ -133,6 +137,22 @@ def _policy_table(test: pd.DataFrame) -> dict:
         "m2_m3_combined_rank": loss_after_declining(combined.to_numpy()),
     }
     return {"n_advances": n, "no_product": {"approval_rate": 0.0, "funds_deployed_bdt": 0, "loss_bdt": 0, "loss_rate": None}, "flat_cap": flat, "ml_tier": ml, "equal_approval": equal}
+
+
+def _economics_base(test: pd.DataFrame, world_months: int) -> dict:
+    """Inputs for the economics sliders (plan.md §10). The page applies the formula; this only measures."""
+    approved = test[test["ml_approved"]]
+    return {
+        "world_months": world_months,
+        "advances_ml": int(len(approved)),
+        "funds_ml_bdt": int(approved["ml_offered"].sum()),
+        "loss_ml_bdt": int(test["ml_loss"].sum()),
+        "advances_flat": int(len(test)),
+        "funds_flat_bdt": int(test["amount"].sum()),
+        "loss_flat_bdt": int(test["loss_amount"].sum()),
+        "avg_days_outstanding": round(float(approved["days_out"].mean()), 2),
+        "mean_monthly_funds_ml_bdt": int(approved["ml_offered"].sum() / world_months),
+    }
 
 
 def _recovery(reps: pd.DataFrame, test: pd.DataFrame) -> dict:
@@ -192,6 +212,7 @@ def evaluate_profile(profile: str, seeds, m1_model, policy) -> dict:
     return {
         "worlds": [f"{profile}{s}" for s in seeds],
         "policies": _policy_table(test),
+        "economics_base": _economics_base(test, world_months=len(seeds) * PROFILES[profile].test_months),
         "recovery_share_by_step_flat_cap": _recovery(rep, test),
         "fairness": _fairness(test, req, policy.fairness_gap_threshold_pp),
         "calibration": _calibration(test),

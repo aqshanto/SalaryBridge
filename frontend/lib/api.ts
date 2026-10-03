@@ -238,3 +238,38 @@ export type Monitor = {
   threshold_top_pct: number;
   top: { employee_id: string; employer_id: string; anomaly_score: number; unusual: boolean; chronic: boolean; requests_6m: number; streak_months: number; full_cap_share: number }[];
 };
+
+export type Bin = { mean_predicted: number; observed_rate: number; n: number };
+export type BinaryMetrics = { n: number; positive_rate: number; pr_auc: number | null; brier: number; calibration: Bin[] };
+export type PolicyResult = { approval_rate: number | null; funds_deployed_bdt: number; loss_bdt: number; loss_rate: number | null };
+export type FairnessDim = { ml_approval_gap_pp: number | null; rule_approval_gap_pp: number | null; threshold_pp: number; within_threshold: boolean; by_employer_risk_band?: Record<string, Record<string, { ml_approval_rate: number | null; advances: number }>> };
+export type ProfileResult = {
+  worlds: string[];
+  policies: {
+    n_advances: number;
+    no_product: PolicyResult;
+    flat_cap: PolicyResult;
+    ml_tier: PolicyResult & { queued_for_human: number; tier_counts: Record<string, number> };
+    equal_approval: Record<string, number | null> & { decline_share: number };
+  };
+  economics_base: {
+    world_months: number;
+    advances_ml: number;
+    funds_ml_bdt: number;
+    loss_ml_bdt: number;
+    avg_days_outstanding: number;
+    mean_monthly_funds_ml_bdt: number;
+  };
+  fairness: Record<string, FairnessDim>;
+  calibration: Record<string, BinaryMetrics>;
+};
+export type M4Split = { world: { model: { coverage_p10_p90: number }; pool_covers_actual_share: number } };
+export type ValidationData = {
+  generated_on: string;
+  targets: { id: string; target: string; value: string; pass: boolean; explained?: boolean }[];
+  profile_a: ProfileResult;
+  profile_b: ProfileResult;
+  m4: { test_profile_a: M4Split; test_profile_b: M4Split };
+  analyst_notes: Record<string, string>;
+  policy: Record<string, number | boolean>;
+};
