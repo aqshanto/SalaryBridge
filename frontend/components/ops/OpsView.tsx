@@ -56,7 +56,7 @@ function QueueCard({ item, onDone }: { item: QueueItem; onDone: () => void }) {
         <div className="font-medium">
           {item.employee_id} <span className="text-xs text-muted">· {item.employer_id} · {item.decision_id}</span>
         </div>
-        {item.tier && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">Tier {item.tier}</span>}
+        {item.tier && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t.tier} {item.tier}</span>}
       </div>
       {item.expired && <div className="mt-1 text-xs text-warn">{t.ops.expired}</div>}
       <div className="mt-2 grid gap-3 text-sm sm:grid-cols-2">
@@ -137,7 +137,7 @@ export function OpsView() {
   };
 
   if (error) return <div className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad" role="alert">{error}</div>;
-  if (!data) return <p className="text-sm text-muted">…</p>;
+  if (!data) return <p className="text-sm text-muted" role="status">{t.loading}</p>;
   const { kpis, forecast, queue, employers, monitor } = data;
   const shownEmployers = allEmployers ? employers : employers.slice(0, 8);
 
