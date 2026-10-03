@@ -44,9 +44,11 @@ class PolicyParams(BaseModel):
 
     # Human oversight and fairness
     large_amount_threshold_bdt: int = 10_000
+    abuse_flag_top_pct: float = 2.0
     fairness_gap_threshold_pp: float = 5.0
 
     # Capital and economics
+    initial_pool_bdt: int = 5_000_000
     capital_buffer_pct: float = 15.0
     capital_rate_annual_pct: float = 12.0
     ops_cost_per_advance_bdt: int = 5
@@ -61,6 +63,11 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     llm_model: str = "claude-haiku-4-5-20251001"
     policy: PolicyParams = PolicyParams()
+
+    # Simulation sessions (one SQLite file per browser session)
+    sim_dir: str | None = None  # default: <system temp>/salarybridge_sessions
+    session_ttl_hours: float = 6.0
+    sim_start_day: int = 20  # the live simulation opens on this day of the first month after history
 
     @property
     def cors_origin_list(self) -> list[str]:

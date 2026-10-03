@@ -68,6 +68,10 @@ class ProfileParams:
     late_window_start_day: int = 20
     late_window_weight: float = 4.0
     second_request_prob: float = 0.15
+    # Requested amount (normal staff): full limit, a round sum (may exceed the limit), or a share of it
+    full_limit_ask_prob: float = 0.30
+    round_ask_prob: float = 0.15
+    round_ask_amounts: tuple = (1_000, 2_000, 3_000, 5_000, 8_000, 10_000)
 
     # Behaviour groups
     chronic_share: float = 0.03
@@ -125,6 +129,23 @@ PROFILES = {"A": ProfileParams(), "B": PROFILE_B}
 def _add_months(d: date, n: int) -> date:
     y, m = divmod(d.month - 1 + n, 12)
     return date(d.year + y, m + 1, 1)
+
+
+def draw_payroll_outcome(rng: np.random.Generator, p: ProfileParams, rtype: str, prev_late: bool) -> tuple[str, int, float]:
+    """One month's payroll outcome for an employer type: (status, delay_days, paid_share).
+
+    Used by the history generator and by the live simulator, so both follow the same rules.
+    """
+    if rtype == "default_risk" and rng.random() < p.default_monthly_prob:
+        return "default", 0, 0.0
+    status, delay, paid_share = "on_time", 0, 1.0
+    if rng.random() < p.late_prob[rtype] + (p.late_persistence if prev_late else 0.0):
+        lo, hi = p.delay_days[rtype]
+        delay = int(rng.integers(lo, hi + 1))
+        status = "late"
+    if rng.random() < p.partial_prob.get(rtype, 0.0):
+        status, paid_share = "partial", float(np.round(rng.uniform(0.5, 0.9), 2))
+    return status, delay, paid_share
 
 
 def _round_down(x: float, step: int = 100) -> int:
@@ -186,17 +207,7 @@ class _World:
             prev_late = False
             for i, ms in enumerate(self.month_starts):
                 scheduled = _add_months(ms, 1).replace(day=emp["payroll_day"])
-                status, delay, paid_share = "on_time", 0, 1.0
-                if rtype == "default_risk" and rng.random() < p.default_monthly_prob:
-                    status, paid_share = "default", 0.0
-                else:
-                    late_p = p.late_prob[rtype] + (p.late_persistence if prev_late else 0.0)
-                    if rng.random() < late_p:
-                        lo, hi = p.delay_days[rtype]
-                        delay = int(rng.integers(lo, hi + 1))
-                        status = "late"
-                    if rng.random() < p.partial_prob.get(rtype, 0.0):
-                        status, paid_share = "partial", float(np.round(rng.uniform(0.5, 0.9), 2))
+                status, delay, paid_share = draw_payroll_outcome(rng, p, rtype, prev_late)
                 prev_late = status in ("late", "partial")
                 self.runs[(emp["employer_id"], i)] = {
                     "employer_id": emp["employer_id"],
@@ -323,8 +334,7 @@ class _World:
         cap_salary = policy.cap_pct_of_salary / 100 * person["salary_bdt"]
         outstanding, approved_days = 0, []
         for count, d in enumerate(req_days, start=1):
-            frac = 1.0 if person["behaviour"] == "abuser" else rng.uniform(0.3, 1.0)
-            requested = max(policy.min_advance_bdt, _round_down(frac * cap_salary))
+            requested = self._requested_amount(person, cap_salary)
             earned = person["salary_bdt"] * d / dim
             hard_cap = _round_down(min(cap_salary, earned) - outstanding)
             decline = None
@@ -355,6 +365,19 @@ class _World:
                 approved_days.append(d)
                 self._issue_advance(emp, person, i, ms.replace(day=d), request_id, approved)
         return approved_days
+
+    def _requested_amount(self, person: dict, cap_salary: float) -> int:
+        """How much a person asks for. Many people ask for the full limit shown, some ask a round sum
+        that can exceed it; abusers always ask for the full limit."""
+        p, rng, policy = self.p, self.rng, self.policy
+        if person["behaviour"] == "abuser":
+            return max(policy.min_advance_bdt, _round_down(cap_salary))
+        u = rng.random()
+        if u < p.full_limit_ask_prob:
+            return max(policy.min_advance_bdt, _round_down(cap_salary))
+        if u < p.full_limit_ask_prob + p.round_ask_prob:
+            return int(rng.choice(p.round_ask_amounts))
+        return max(policy.min_advance_bdt, _round_down(rng.uniform(0.3, 1.0) * cap_salary))
 
     def _issue_advance(self, emp, person, i, issue_date, request_id, amount) -> None:
         policy = self.policy

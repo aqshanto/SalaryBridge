@@ -34,13 +34,13 @@ Profile A is the training world (stored in `seed.db`). Profile B is a held-out s
 | Table | A | B |
 |---|---|---|
 | employers | 40 | 40 |
-| employees | 8,126 | 9,459 |
+| employees | 8,166 | 9,444 |
 | payroll_runs | 921 | 921 |
 | attendance | 132,443 | 133,050 |
-| advance_requests | 15,048 | 23,869 |
-| advances | 13,943 | 21,162 |
-| repayments | 14,353 | 22,669 |
-| resignations | 2,651 | 4,700 |
+| advance_requests | 15,057 | 23,473 |
+| advances | 13,457 | 19,836 |
+| repayments | 13,849 | 21,293 |
+| resignations | 2,691 | 4,685 |
 
 ## 3. Key distributions
 
@@ -48,13 +48,13 @@ Profile A is the training world (stored in `seed.db`). Profile B is a held-out s
 
 | Industry | A median | B median |
 |---|---|---|
-| factory | 18,000 | 15,000 |
+| factory | 17,500 | 15,000 |
 | garments | 17,500 | 14,500 |
-| hospital | 35,000 | 29,500 |
-| it | 61,000 | 51,500 |
-| ngo | 35,500 | 30,500 |
+| hospital | 34,000 | 29,500 |
+| it | 59,000 | 51,000 |
+| ngo | 35,500 | 30,000 |
 | retail | 23,000 | 19,500 |
-| school | 23,500 | 18,500 |
+| school | 23,500 | 19,500 |
 
 ### Payroll run status
 
@@ -69,23 +69,23 @@ Profile A is the training world (stored in `seed.db`). Profile B is a held-out s
 
 | Measure | A | B |
 |---|---|---|
-| Advances | 13,943 | 21,162 |
-| Approval rate (pilot rules) | 92.7% | 88.7% |
-| Not recovered by due date + grace | 15.2% | 32.2% |
+| Advances | 13,457 | 19,836 |
+| Approval rate (pilot rules) | 89.4% | 84.5% |
+| Not recovered by due date + grace | 16.2% | 33.4% |
 | Loss as share of money due | 1.2% | 3.1% |
-| Advances lost: employer_default | 39 | 213 |
-| Advances lost: partial_payroll | 74 | 454 |
-| Advances lost: resigned_before_payday | 108 | 329 |
+| Advances lost: employer_default | 41 | 172 |
+| Advances lost: partial_payroll | 82 | 428 |
+| Advances lost: resigned_before_payday | 102 | 350 |
 
 ## 4. Pattern checks
 
 | Check | A | B |
 |---|---|---|
-| Month-end surge | PASS: day 25+ 821/day vs day 1–5 257/day | PASS: day 25+ 996/day vs day 1–5 418/day |
+| Month-end surge | PASS: day 25+ 826/day vs day 1–5 249/day | PASS: day 25+ 988/day vs day 1–5 422/day |
 | Lateness follows employer type | PASS: on_time 4%, sometimes_late 27%, often_late 63% | PASS: on_time 9%, sometimes_late 36%, often_late 72% |
 | Lateness persists | PASS: after a late month 51%, otherwise 13% | PASS: after a late month 70%, otherwise 20% |
-| Eid surge | PASS: Eid 0.164 vs other 0.104 requests per active person | PASS: Eid 0.251 vs other 0.165 requests per active person |
-| Chronic borrowers request most months | PASS: chronic 86% vs normal 8% of active months | PASS: chronic 84% vs normal 12% of active months |
-| Short tenure leaves more | PASS: tenure < 1y 29% vs 23% | PASS: tenure < 1y 38% vs 32% |
-| Losses only from modelled causes | PASS: 221 advances with loss | PASS: 996 advances with loss |
+| Eid surge | PASS: Eid 0.164 vs other 0.104 requests per active person | PASS: Eid 0.252 vs other 0.161 requests per active person |
+| Chronic borrowers request most months | PASS: chronic 84% vs normal 8% of active months | PASS: chronic 86% vs normal 12% of active months |
+| Short tenure leaves more | PASS: tenure < 1y 30% vs 23% | PASS: tenure < 1y 38% vs 31% |
+| Losses only from modelled causes | PASS: 225 advances with loss | PASS: 950 advances with loss |
 | Money adds up | PASS: recovered + loss = amount + fee for every advance | PASS: recovered + loss = amount + fee for every advance |

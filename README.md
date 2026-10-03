@@ -13,6 +13,18 @@ uv pip install --python .venv/Scripts/python.exe -r requirements.txt
 .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
+For a quick run, skip the end-to-end training tests with `.venv/Scripts/python.exe -m pytest -m "not slow"`.
+
+Models are trained offline and the artifacts in `backend/artifacts/` are committed. Retrain in order (M2 uses M1):
+
+```bash
+.venv/Scripts/python.exe -m app.ml.m1_employer
+.venv/Scripts/python.exe -m app.ml.m2_repayment
+.venv/Scripts/python.exe -m app.ml.m3_attrition
+.venv/Scripts/python.exe -m app.ml.m4_capital
+.venv/Scripts/python.exe -m app.ml.m5_abuse
+```
+
 On first start the API builds `backend/seed.db` from the fixed seed (about 2 seconds). To rebuild it by hand: `.venv/Scripts/python.exe -m data.seed`. Delete `seed.db` to force a rebuild; the same seed always gives the same data.
 
 On macOS/Linux use `.venv/bin/python` instead of `.venv/Scripts/python.exe`. Copy `.env.example` to `.env` to override settings.

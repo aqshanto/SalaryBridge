@@ -27,7 +27,9 @@ The default column is checked against `backend/app/config.py` by a test, so this
 | `cooling_off_consecutive_months` | 3 | [ASSUMPTION] | Three advances in a row signals possible dependence. |
 | `cooling_off_months` | 1 | [ASSUMPTION] | Then pause for one month, with a supportive message. |
 | `large_amount_threshold_bdt` | 10000 | [ASSUMPTION] | Requests at or above this go to the human approval queue. |
+| `abuse_flag_top_pct` | 2.0 | [ASSUMPTION] | The most unusual 2% of borrowing patterns (by M5 anomaly score in training data) go to a person before any offer. |
 | `fairness_gap_threshold_pp` | 5.0 | [ASSUMPTION] | Approval-rate gap between audited groups (percentage points) that requires an explanation. |
+| `initial_pool_bdt` | 5000000 | [ASSUMPTION] | Money upay sets aside for advances when a simulation session starts. |
 | `capital_buffer_pct` | 15.0 | [ASSUMPTION] | Pool held above the P90 forecast. |
 | `capital_rate_annual_pct` | 12.0 | [ASSUMPTION] | Cost of the money upay sets aside for advances. |
 | `ops_cost_per_advance_bdt` | 5 | [ASSUMPTION] | Processing and messaging cost per advance. |
@@ -56,7 +58,7 @@ Values below are the defaults in `ProfileParams`. Change the code and this table
 | Synthetic Eid months | 2025-03, 2025-06, 2026-03, 2026-05 | [ASSUMPTION] |
 | Request day | days 20+ are 4× as likely as earlier days | [ASSUMPTION] |
 | Second request in a month | 15% | [ASSUMPTION] |
-| Requested amount | normal: 30–100% of the salary cap; abusers: always 100% | [ASSUMPTION] |
+| Requested amount | normal staff: 30% ask for the full limit, 15% ask a round sum (1k, 2k, 3k, 5k, 8k or 10k BDT, which can exceed the limit), 55% ask 30–100% of the salary cap; abusers always ask for the full limit. (Changed in F12: when only abusers asked for the full limit, the models learned "full limit = abuser", which is unrealistic.) | [ASSUMPTION] |
 | Chronic borrowers | 3% of people; 85% chance of a request every month | [ASSUMPTION] |
 | Abusers | 1% of people; 50% monthly request chance; after an advance, 60% chance they resign within 1–5 days | [ASSUMPTION] |
 | Attrition (monthly) | 3.5% if tenure < 1 year, otherwise 1.2% | [ASSUMPTION] |

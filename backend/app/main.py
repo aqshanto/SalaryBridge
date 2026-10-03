@@ -4,7 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import APP_VERSION, get_settings
+from app.routers import advance as advance_router
 from app.routers import config as config_router
+from app.routers import ops as ops_router
+from app.routers import sim as sim_router
 from data.seed import ensure_seed_db
 
 
@@ -25,6 +28,9 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(config_router.router)
+    app.include_router(sim_router.router)
+    app.include_router(advance_router.router)
+    app.include_router(ops_router.router)
 
     @app.get("/health")
     def health() -> dict:
