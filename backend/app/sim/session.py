@@ -354,6 +354,21 @@ class SimSession:
         with self.engine.begin() as conn:
             conn.execute(insert(sim_decisions).values(**row))
 
+    def ledger_balances(self) -> dict:
+        """Balances in BDT grouped for the money-flow panel. All groups always sum to zero."""
+        balances = self.ledger.balances()
+        group = lambda prefix: sum(v for k, v in balances.items() if k.startswith(prefix))  # noqa: E731
+        bdt = lambda paisa: round(paisa / 100, 2)  # noqa: E731
+        return {
+            "upay_capital": bdt(balances.get("upay_capital", 0)),
+            "upay_pool": bdt(balances.get("upay_pool", 0)),
+            "employee_wallets": bdt(group("employee_wallet:")),
+            "employers": bdt(group("employer:")),
+            "fees_income": bdt(balances.get("fees_income", 0)),
+            "loss_provision": bdt(balances.get("loss_provision", 0)),
+            "external_spend": bdt(balances.get("external_spend", 0)),
+        }
+
     # ---------- state ----------
     def state(self) -> dict:
         today = self.sim_date
@@ -374,7 +389,7 @@ class SimSession:
             "kill_switch": self.kill_switch,
             "pool_bdt": paisa_to_bdt(self.ledger.balance("upay_pool")),
             "advances": settlement.summary(self),
-            "ledger": {"reconciled": recon.ok, "entries": recon.entries, "total_paisa": recon.total_paisa},
+            "ledger": {"reconciled": recon.ok, "entries": recon.entries, "total_paisa": recon.total_paisa, "balances_bdt": self.ledger_balances()},
             "recent_payroll_runs": [
                 {
                     "employer_id": r.employer_id,

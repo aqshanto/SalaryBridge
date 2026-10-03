@@ -96,3 +96,11 @@ def test_expired_sessions_are_cleaned_up(sim_env):
     os.utime(old.path, (past, past))
     assert cleanup_expired(sim_env) == 1
     assert not (sessions_dir(sim_env) / "old-session-0001.db").exists()
+
+
+def test_state_reports_grouped_ledger_balances_that_sum_to_zero(client, sim_env):
+    body = client.post("/sim/advance-time", json={"days": 15}, headers=S1).json()
+    balances = body["state"]["ledger"]["balances_bdt"]
+    assert set(balances) == {"upay_capital", "upay_pool", "employee_wallets", "employers", "fees_income", "loss_provision", "external_spend"}
+    assert abs(sum(balances.values())) < 0.01
+    assert balances["upay_pool"] == sim_env.policy.initial_pool_bdt and balances["upay_capital"] == -sim_env.policy.initial_pool_bdt
