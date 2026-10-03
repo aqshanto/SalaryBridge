@@ -293,7 +293,7 @@ net     = revenue − cost
 | Regulatory unknowns | State them openly; legal review before any pilot |
 | Employer non-cooperation | Model employer reliability; minimise HR friction |
 | Model overfits its own synthetic world | Profile B stress test; time-based split |
-| Scope creep | One feature at a time, per `prompt.md` |
+| Scope creep | One feature at a time, in a fixed order |
 | Free-tier cold starts | Warm `/health` before the demo |
 
 ## 14. Red lines (never claim)

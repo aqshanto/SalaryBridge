@@ -1,6 +1,6 @@
 # SalaryBridge: Plot (Story, Personas, Screens, Demo)
 
-This file defines what the user experiences. `plan.md` defines how it works. Every feature in `prompt.md` must serve a scene here.
+This file defines what the user experiences. `plan.md` defines how it works. Every feature must serve a scene here.
 
 All names are fictional and all data is synthetic.
 

@@ -21,6 +21,17 @@ out/
 # Office lock files (created while a .pptx/.docx is open)
 ~$*
 
+# Local working notes and tool settings
+CLAUDE.md
+AGENTS.md
+agent.md
+prompt.md
+.claude/
+
+# Submission files (submitted through the portal; they contain personal details)
+docs/report/
+docs/presentation/
+
 # Scratch extracts
 guideline.txt
 guideline_clean.txt
