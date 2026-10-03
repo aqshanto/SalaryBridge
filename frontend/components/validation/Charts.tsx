@@ -12,6 +12,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  type LabelProps,
 } from "recharts";
 
 import { useSim } from "@/components/SimProvider";
@@ -38,6 +39,15 @@ function points(r: ProfileResult, labels: { flat: string; ml: string }): Point[]
     { x: p.flat_cap.approval_rate ?? 0, y: p.flat_cap.loss_rate ?? 0, label: labels.flat },
     { x: p.ml_tier.approval_rate ?? 0, y: p.ml_tier.loss_rate ?? 0, label: labels.ml },
   ];
+}
+
+/** One-line label to the left of a point: the default wraps word by word and A/B labels collide. */
+function PointLabel({ x, y, height, value }: LabelProps) {
+  return (
+    <text x={Number(x) - 8} y={Number(y) + Number(height ?? 0) / 2} dy="0.35em" textAnchor="end" fill="var(--ink)" fontSize={11}>
+      {String(value)}
+    </text>
+  );
 }
 
 function PointTooltip({ active, payload }: { active?: boolean; payload?: { payload: Point & { series: string } }[] }) {
@@ -69,10 +79,10 @@ export function LossApprovalChart({ a, b }: { a: ProfileResult; b: ProfileResult
           <YAxis type="number" dataKey="y" domain={[0, maxY]} tickFormatter={(v: number) => pct(v, lang, 1)} axisLine={false} width={56} {...AXIS} />
           <Tooltip content={<PointTooltip />} cursor={{ strokeDasharray: "3 3", stroke: "var(--muted)" }} />
           <Scatter data={pa} fill="var(--series-a)" shape="circle" isAnimationActive={false}>
-            <LabelList dataKey="label" position="top" fill="var(--ink)" fontSize={11} />
+            <LabelList dataKey="label" content={PointLabel} />
           </Scatter>
           <Scatter data={pb} fill="var(--series-b)" shape="diamond" isAnimationActive={false}>
-            <LabelList dataKey="label" position="bottom" fill="var(--ink)" fontSize={11} />
+            <LabelList dataKey="label" content={PointLabel} />
           </Scatter>
         </ScatterChart>
       </ResponsiveContainer>
