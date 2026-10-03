@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from datetime import timedelta
 
+from app.llm.explain import _fmt_date, _fmt_num
 from app.services import advances
 from app.services.capital import forecast
 from app.services.decision import decide
@@ -29,6 +30,25 @@ ALIASES = {
 
 class ScenarioError(ValueError):
     pass
+
+
+NAMES_BN = {"Rahim": "রহিম", "Shapla": "শাপলা", "Karim": "করিম"}
+
+
+def _n(x: int) -> str:
+    return _fmt_num(int(x), "bn")
+
+
+def _d(iso: str) -> str:
+    return _fmt_date(str(iso)[:10], "bn")
+
+
+def _bn(name: str) -> str:
+    return NAMES_BN.get(name, name)
+
+
+def _month_bn(month: str) -> str:
+    return _d(f"{month}-01").split(" ", 1)[1]  # drop the day: "অক্টোবর ২০২৬"
 
 
 def _personas(session: SimSession) -> dict:
@@ -54,6 +74,12 @@ def s1_happy_path(session: SimSession, p: dict) -> dict:
         "setup": [],
         "try": [f"Ask for 5,000 BDT as {p['rahim']['name']}", "Accept the offer", "Jump to payday"],
         "expect": ["Offer at the 20% limit with reasons", "On payday the employer remits once and the advance is recovered", "Ledger reconciles"],
+        "bn": {
+            "title": "স্বাভাবিক পথ",
+            "setup": [],
+            "try": [f"{_bn(p['rahim']['name'])} হিসেবে {_n(5000)} টাকা চান", "অফার গ্রহণ করুন", "বেতনের দিনে যান"],
+            "expect": ["কারণসহ ২০% সীমায় অফার", "বেতনের দিনে প্রতিষ্ঠান একবারে টাকা পাঠায়, আগাম ফেরত আসে", "লেজারের হিসাব মেলে"],
+        },
     }
 
 
@@ -66,6 +92,12 @@ def s2_risky_employer(session: SimSession, p: dict) -> dict:
         "setup": [f"{shapla['employer_id']} will pay this month's wages 3 days late (within the {session.settings.policy.grace_days}-day grace)"],
         "try": [f"Ask for 10,000 BDT as {shapla['name']}", "Accept the smaller offer", "Advance 20 days"],
         "expect": ["A smaller limit than the hard cap, with employer-lateness reasons", "Recovered late but within grace"],
+        "bn": {
+            "title": "দেরিতে বেতন দেওয়া প্রতিষ্ঠান",
+            "setup": [f"{shapla['employer_id']} এ মাসের বেতন {_n(3)} দিন দেরিতে দেবে (গ্রেস {_n(session.settings.policy.grace_days)} দিনের মধ্যে)"],
+            "try": [f"{_bn(shapla['name'])} হিসেবে {_n(10000)} টাকা চান", "ছোট অফারটি গ্রহণ করুন", f"{_n(20)} দিন এগিয়ে যান"],
+            "expect": ["সর্বোচ্চ সীমার চেয়ে কম অফার, কারণ হিসেবে প্রতিষ্ঠানের দেরি", "দেরিতে, তবে গ্রেসের মধ্যে ফেরত"],
+        },
     }
 
 
@@ -81,6 +113,15 @@ def s3_resigns_before_payday(session: SimSession, p: dict) -> dict:
         "try": ["Jump to payday", f"Advance {session.settings.policy.writeoff_after_days + 5} days"],
         "expect": ["Waterfall: employer final settlement, then wallet, then write-off", "Loss counted in loss_provision if nothing could be collected"],
         "advance_id": adv["advance_id"],
+        "bn": {
+            "title": "বেতনের আগে চাকরি ছাড়া",
+            "setup": [
+                f"{_bn(rahim['name'])} {_n(adv['amount_bdt'])} টাকা নিয়েছেন ({adv['advance_id']})",
+                f"{_bn(rahim['name'])} {_d(end.isoformat())} তারিখে চাকরি ছাড়েন, বেতনের দিন {_d(adv['due_date'])}-এর আগে",
+            ],
+            "try": ["বেতনের দিনে যান", f"{_n(session.settings.policy.writeoff_after_days + 5)} দিন এগিয়ে যান"],
+            "expect": ["ধাপে ধাপে আদায়: প্রতিষ্ঠানের চূড়ান্ত পাওনা, তারপর ওয়ালেট, তারপর লোকসান লেখা", "কিছু আদায় না হলে লোকসান হিসাবে লেখা হয়"],
+        },
     }
 
 
@@ -96,6 +137,12 @@ def s4_employer_defaults(session: SimSession, p: dict) -> dict:
         "try": [f"Jump to payday for {shapla['employer_id']}", "Open the ops employer table", "Ask for an advance as any colleague"],
         "expect": ["Employer payroll risk rises and the employer shows as closed", "New advances for its staff are paused (EMPLOYER_CLOSED)", "Exposure for that employer is shown until it is written off"],
         "advance_id": adv["advance_id"],
+        "bn": {
+            "title": "প্রতিষ্ঠান বেতন দেয়নি",
+            "setup": [f"{_bn(shapla['name'])} {_n(adv['amount_bdt'])} টাকা নিয়েছেন ({adv['advance_id']})", f"{shapla['employer_id']} এ মাসের বেতন দেবে না"],
+            "try": [f"{shapla['employer_id']}-এর বেতনের দিনে যান", "অপারেশনের প্রতিষ্ঠান-টেবিল খুলুন", "যেকোনো সহকর্মী হিসেবে আগাম চান"],
+            "expect": ["প্রতিষ্ঠানের ঝুঁকি বাড়ে এবং বন্ধ দেখায়", "এর কর্মীদের নতুন আগাম বন্ধ (EMPLOYER_CLOSED)", "লোকসান লেখা পর্যন্ত বকেয়া দেখা যায়"],
+        },
     }
 
 
@@ -106,6 +153,12 @@ def s5_chronic_borrower(session: SimSession, p: dict) -> dict:
         "setup": [],
         "try": [f"Ask for 3,000 BDT as {p['karim']['name']}"],
         "expect": ["A one-month pause (cooling-off) with a supportive message, not a hard 'no'", "Chronic borrowing flagged"],
+        "bn": {
+            "title": "নিয়মিত ঋণগ্রহীতা",
+            "setup": [],
+            "try": [f"{_bn(p['karim']['name'])} হিসেবে {_n(3000)} টাকা চান"],
+            "expect": ["সরাসরি 'না' নয়, সহায়ক বার্তাসহ এক মাসের বিরতি", "নিয়মিত ঋণ নেওয়া চিহ্নিত হয়"],
+        },
     }
 
 
@@ -128,6 +181,15 @@ def s6_eid_surge(session: SimSession, p: dict) -> dict:
         "required_before_bdt": normal["current_required_pool_bdt"],
         "required_after_bdt": surge["current_required_pool_bdt"],
         "pool_bdt": surge["pool_bdt"],
+        "bn": {
+            "title": "ঈদের চাপ",
+            "setup": [
+                f"পুল স্বাভাবিক মাসের প্রয়োজনে রাখা হলো: {_n(normal['current_required_pool_bdt'])} টাকা",
+                f"{_month_bn(month)} ও {_month_bn(next_month)} ঈদের মাস হিসেবে চিহ্নিত",
+            ],
+            "try": ["অপারেশনের মূলধন-পূর্বাভাস খুলুন", f"{_bn(p['rahim']['name'])} হিসেবে আগাম চান"],
+            "expect": ["পূর্বাভাসের ব্যান্ড উপরে ওঠে", "পুল এখন P90 + বাফারের প্রয়োজনের চেয়ে কম", "অনুরোধ মানুষের তালিকায় যায় (POOL_BELOW_FORECAST)"],
+        },
     }
 
 
@@ -142,6 +204,12 @@ def s7_kill_switch(session: SimSession, p: dict) -> dict:
         "try": [f"Ask for an advance as {p['shapla']['name']}", "Jump to payday"],
         "expect": ["New requests are blocked with a clear message", f"{rahim['name']}'s existing advance still settles on payday"],
         "advance_id": adv["advance_id"],
+        "bn": {
+            "title": "কিল সুইচ",
+            "setup": [f"{_bn(rahim['name'])}-এর একটি চলমান আগাম আছে ({adv['advance_id']})", "কিল সুইচ চালু করা হয়েছে"],
+            "try": [f"{_bn(p['shapla']['name'])} হিসেবে আগাম চান", "বেতনের দিনে যান"],
+            "expect": ["নতুন অনুরোধ স্পষ্ট বার্তাসহ বন্ধ থাকে", f"{_bn(rahim['name'])}-এর চলমান আগাম বেতনের দিনে ঠিকই আদায় হয়"],
+        },
     }
 
 
