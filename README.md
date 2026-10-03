@@ -8,7 +8,7 @@ See `plan.md` (how it works), `plot.md` (what users see), `prompt.md` (feature o
 ```bash
 cd backend
 uv venv --python 3.11 .venv
-uv pip install --python .venv/Scripts/python.exe -r requirements.txt
+uv pip install --python .venv/Scripts/python.exe -r requirements-dev.txt
 .venv/Scripts/python.exe -m pytest
 .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
 ```
@@ -45,3 +45,9 @@ npm run dev
 ```
 
 Open http://localhost:3000. The page shows the API health. Set `NEXT_PUBLIC_API_BASE_URL` (see `frontend/.env.example`) when the API is not on `http://localhost:8000`.
+
+## Deploy
+
+Backend on Render (`render.yaml`), frontend on Vercel. Step-by-step guide, demo-day checklist and troubleshooting:
+[`docs/deploy.md`](docs/deploy.md). Free Render services sleep after 15 minutes idle; open `/health` about 10 minutes
+before a demo.

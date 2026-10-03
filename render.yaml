@@ -1,0 +1,27 @@
+# Render Blueprint for the SalaryBridge API (backend only; the frontend deploys to Vercel).
+# New > Blueprint > pick this repo. Fill the two "sync: false" values when Render asks.
+services:
+  - type: web
+    name: salarybridge-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      # Models were trained and pickled on 3.11; Render's default is newer.
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SEED
+        value: "42"
+      # Your Vercel URL, e.g. https://salarybridge.vercel.app (comma-separate several).
+      - key: CORS_ORIGINS
+        sync: false
+      # Optional: without it, explanations use the built-in templates.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: claude-opus-5-5
