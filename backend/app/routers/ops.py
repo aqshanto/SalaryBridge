@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 from app.routers.sim import get_session
 from app.services import advances, capital, employers
+from app.services import ops as ops_service
 from app.sim.session import SimSession
 
 router = APIRouter(prefix="/ops", tags=["ops"])
@@ -60,3 +61,13 @@ def capital_forecast(session: SimSession = Depends(get_session)) -> dict:
 @router.get("/employers")
 def employer_risk(session: SimSession = Depends(get_session)) -> list[dict]:
     return employers.employer_table(session)
+
+
+@router.get("/summary")
+def summary(session: SimSession = Depends(get_session)) -> dict:
+    return ops_service.kpis(session)
+
+
+@router.get("/borrowing-monitor")
+def borrowing_monitor(session: SimSession = Depends(get_session)) -> dict:
+    return ops_service.borrowing_monitor(session)

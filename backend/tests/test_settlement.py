@@ -77,7 +77,7 @@ def test_deduction_notice_is_one_list_one_total_without_risk(client, people):
 
     text = client.get(f"/employer/{employer}/deduction-notice.csv", headers=H).text
     rows = list(csv.reader(io.StringIO(text)))
-    assert rows[0][0] == "employee_id" and rows[-1] == ["TOTAL", "", "", "", str(notice["total_bdt"])]
+    assert rows[0][:2] == ["employee_id", "name"] and rows[-1] == ["TOTAL", "", "", "", "", str(notice["total_bdt"])]
     assert client.get("/employer/E999/deduction-notice", headers=H).status_code == 404
 
 

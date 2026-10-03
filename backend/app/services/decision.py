@@ -151,12 +151,15 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
     as_of = session.sim_date
     closed = person["employer_id"] in session.closed_employers()
     left = session.resignation(employee_id)
+    hr = session.employer_settings(person["employer_id"])
+    # The employer may choose a lower cap than upay's; rules then use the lower one.
+    policy = policy.model_copy(update={"cap_pct_of_salary": min(policy.cap_pct_of_salary, hr["cap_pct"])})
 
     history = _employee_history(session, employee_id)
     live = session.advances_df(employee_id)
     history_ctx = _history_context(history, live, as_of)
     rules = evaluate(
-        EmployerContext(employer["employer_id"], int(employer["payroll_day"]), bool(employer["opted_in"]), closed),
+        EmployerContext(employer["employer_id"], int(employer["payroll_day"]), hr["opted_in"], closed),
         EmployeeContext(employee_id, int(person["salary_bdt"]), pd.Timestamp(person["hire_date"]).date(), left is None or left > as_of),
         history_ctx,
         RequestContext(as_of=as_of, amount_bdt=int(amount_bdt), kill_switch=session.kill_switch),

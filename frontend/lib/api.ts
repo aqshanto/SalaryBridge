@@ -134,3 +134,107 @@ export type EmployeeSummary = {
   active: boolean;
   history: HistoryItem[];
 };
+
+export type EmployerRow = { employer_id: string; name: string; industry: string; headcount: number; payroll_day: number; status: string; persona: string | null };
+
+export type NoticeItem = { advance_id: string; employee_id: string; name: string; kind: "new" | "carried_over"; issue_date: string; amount_due_bdt: number };
+
+export type Notice = {
+  employer_id: string;
+  generated_on: string;
+  payday: string | null;
+  items: NoticeItem[];
+  employees: number;
+  total_bdt: number;
+  confirmation: { total_bdt: number; acked_on: string } | null;
+};
+
+export type EmployerDashboard = {
+  employer_id: string;
+  name: string;
+  headcount: number;
+  payroll_day: number;
+  status: "open" | "closed";
+  settings: { opted_in: boolean; cap_pct: number };
+  upay_cap_pct: number;
+  payday: string | null;
+  employees_with_deductions: number;
+  total_to_deduct_bdt: number;
+  advances_settled_this_session: number;
+  remitted_this_session_bdt: number;
+  notice: Notice;
+};
+
+/** Download a file from an endpoint that needs the session header (a plain link cannot send it). */
+export async function download(path: string, sessionId: string, filename: string) {
+  const res = await fetch(`${API_BASE}${path}`, { headers: { "X-Session-Id": sessionId } });
+  if (!res.ok) throw new ApiError(res.status, `HTTP ${res.status}`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export type OpsKpis = {
+  outstanding_bdt: number;
+  pool_bdt: number;
+  required_pool_bdt: number;
+  pool_below_required: boolean;
+  disbursed_bdt: number;
+  fees_income_bdt: number;
+  loss_provision_bdt: number;
+  loss_rate: number | null;
+  decisions: number;
+  approval_rate: number | null;
+  queue_open: number;
+  kill_switch: boolean;
+};
+
+export type ForecastMonth = { month: string; horizon: number; p10_bdt: number; p50_bdt: number; p90_bdt: number; required_pool_bdt: number; is_eid: boolean };
+
+export type CapitalForecast = {
+  origin_month: string;
+  model_version: string;
+  buffer_pct: number;
+  months: ForecastMonth[];
+  current_month: string;
+  current_required_pool_bdt: number;
+  pool_bdt: number;
+  pool_below_required: boolean;
+};
+
+export type QueueItem = {
+  decision_id: string;
+  sim_date: string;
+  employee_id: string;
+  employer_id: string;
+  requested_bdt: number;
+  proposed_bdt: number;
+  hard_cap_bdt: number;
+  tier: string | null;
+  risk: { employer_prob_late?: number; prob_fail?: number; prob_leave?: number; anomaly_score?: number; unusual_pattern?: boolean };
+  reasons: Reason[];
+  expired: boolean;
+};
+
+export type EmployerRisk = {
+  employer_id: string;
+  name: string;
+  status: "open" | "closed";
+  prob_late: number;
+  prob_late_before: number;
+  trend: number;
+  risk_source: "m1" | "rule";
+  reasons: { code: string; direction: string }[];
+  exposure_bdt: number;
+};
+
+export type Monitor = {
+  screened: number;
+  unusual: number;
+  chronic: number;
+  threshold_top_pct: number;
+  top: { employee_id: string; employer_id: string; anomaly_score: number; unusual: boolean; chronic: boolean; requests_6m: number; streak_months: number; full_cap_share: number }[];
+};

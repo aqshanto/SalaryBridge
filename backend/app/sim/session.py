@@ -22,7 +22,9 @@ from app.sim.tables import (  # noqa: F401  (re-exported for services and tests)
     sim_advances,
     sim_closed_employers,
     sim_decisions,
+    sim_employer_settings,
     sim_meta,
+    sim_notice_acks,
     sim_overrides,
     sim_payroll_runs,
     sim_repayments,
@@ -151,6 +153,36 @@ class SimSession:
         with self.engine.begin() as conn:
             conn.execute(delete(sim_overrides).where(sim_overrides.c.employer_id == employer_id, sim_overrides.c.work_month == work_month))
             conn.execute(insert(sim_overrides).values(employer_id=employer_id, work_month=work_month, status=status, delay_days=delay_days, paid_share=paid_share))
+
+    def employer_settings(self, employer_id: str) -> dict:
+        """HR settings for an employer: opted in, and its own cap (never above the policy cap)."""
+        with self.engine.connect() as conn:
+            row = conn.execute(select(sim_employer_settings).where(sim_employer_settings.c.employer_id == employer_id)).first()
+        if row is not None:
+            return {"opted_in": bool(row.opted_in), "cap_pct": float(row.cap_pct)}
+        opted = bool(self.world.employers_all.set_index("employer_id").at[employer_id, "opted_in"])
+        return {"opted_in": opted, "cap_pct": float(self.settings.policy.cap_pct_of_salary)}
+
+    def set_employer_settings(self, employer_id: str, opted_in: bool, cap_pct: float) -> dict:
+        policy_cap = self.settings.policy.cap_pct_of_salary
+        if not 0 < cap_pct <= policy_cap:
+            raise SessionError(f"cap_pct must be above 0 and at most the upay limit of {policy_cap:g}%")
+        with self.engine.begin() as conn:
+            conn.execute(delete(sim_employer_settings).where(sim_employer_settings.c.employer_id == employer_id))
+            conn.execute(insert(sim_employer_settings).values(employer_id=employer_id, opted_in=opted_in, cap_pct=cap_pct))
+        return self.employer_settings(employer_id)
+
+    def ack_notice(self, employer_id: str, payday: date, total_bdt: int) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(delete(sim_notice_acks).where(sim_notice_acks.c.employer_id == employer_id, sim_notice_acks.c.payday == payday))
+            conn.execute(insert(sim_notice_acks).values(employer_id=employer_id, payday=payday, total_bdt=total_bdt, acked_on=self.sim_date))
+
+    def notice_ack(self, employer_id: str, payday: date) -> dict | None:
+        with self.engine.connect() as conn:
+            row = conn.execute(
+                select(sim_notice_acks).where(sim_notice_acks.c.employer_id == employer_id, sim_notice_acks.c.payday == payday)
+            ).first()
+        return {"total_bdt": row.total_bdt, "acked_on": row.acked_on.isoformat()} if row else None
 
     @property
     def extra_eid_months(self) -> list[str]:

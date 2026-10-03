@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pandas as pd
 from sqlalchemy import select
 
@@ -20,17 +22,24 @@ def exposure_by_employer(session: SimSession) -> dict[str, int]:
     return out
 
 
+TREND_DAYS = 30
+
+
 def employer_table(session: SimSession) -> list[dict]:
+    """Live M1 payroll risk per employer, with the change since TREND_DAYS ago (same point-in-time features)."""
     model = m1.load_model()
     today = session.sim_date
+    before = today - timedelta(days=TREND_DAYS)
     closed = session.closed_employers()
     exposure = exposure_by_employer(session)
     employers = session.world.employers_all.set_index("employer_id", drop=False)
     ids = list(session.world.employers.index)
-    rows, feats = [], []
+    rows, feats, feats_before = [], [], []
+    grace = session.settings.policy.grace_days
     for eid in ids:
         runs = _employer_runs(session, eid)
-        feats.append(m1.employer_features(employers.loc[eid], runs, today, session.settings.policy.grace_days))
+        feats.append(m1.employer_features(employers.loc[eid], runs, today, grace))
+        feats_before.append(m1.employer_features(employers.loc[eid], runs, before, grace))
         last = runs.sort_values("scheduled_date").iloc[-1] if len(runs) else None
         rows.append(
             {
@@ -46,15 +55,19 @@ def employer_table(session: SimSession) -> list[dict]:
         )
     X = pd.DataFrame(feats)
     probs = model.predict_proba(X)
+    probs_before = model.predict_proba(pd.DataFrame(feats_before))
     reasons = model.reasons(X)
-    for row, p, r in zip(rows, probs, reasons):
+    for row, p, pb, r in zip(rows, probs, probs_before, reasons):
+        row["prob_late_before"] = round(float(pb), 4)
         if row["status"] == "closed":
             # A default is a known fact, not a prediction. M1 also never saw post-default months in
             # training (a defaulting employer closes), so its score here would be meaningless.
             row["prob_late"], row["risk_source"] = 1.0, "rule"
+            row["trend"] = round(1.0 - float(pb), 4)
             row["reasons"] = [{"feature": "payroll_status", "code": "EMPLOYER_DEFAULTED", "direction": "raises_risk", "shap": None}]
         else:
             row["prob_late"], row["risk_source"] = round(float(p), 4), "m1"
+            row["trend"] = round(float(p) - float(pb), 4)
             row["reasons"] = r
     rows.sort(key=lambda r: (-r["prob_late"], r["employer_id"]))
     return rows

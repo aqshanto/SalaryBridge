@@ -42,6 +42,25 @@ sim_overrides = Table(
     Column("paid_share", Float, nullable=False),
 )
 
+# Employer HR settings changed during the session (defaults come from the seed and policy).
+sim_employer_settings = Table(
+    "sim_employer_settings",
+    metadata,
+    Column("employer_id", String(10), primary_key=True),
+    Column("opted_in", Boolean, nullable=False),
+    Column("cap_pct", Float, nullable=False),
+)
+
+# HR acknowledgements of a deduction notice ("we will remit this total on payday").
+sim_notice_acks = Table(
+    "sim_notice_acks",
+    metadata,
+    Column("employer_id", String(10), primary_key=True),
+    Column("payday", Date, primary_key=True),
+    Column("total_bdt", Integer, nullable=False),
+    Column("acked_on", Date, nullable=False),
+)
+
 # People who left during the session.
 sim_resignations = Table(
     "sim_resignations",
