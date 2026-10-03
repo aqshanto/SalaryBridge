@@ -19,7 +19,8 @@ function Button({ onClick, disabled, children, tone = "default" }: { onClick: ()
 }
 
 export function SimulatorBar() {
-  const { t, lang, state, busy, error, advance, jumpToPayday, reset, runScenario, guide, closeGuide } = useSim();
+  const { t, lang, state, busy, error, advance, jumpToPayday, reset, runScenario, guide, closeGuide, demoMode } = useSim();
+  const g = guide && lang === "bn" && guide.bn ? { ...guide, ...guide.bn } : guide;
   const num = (n: number) => (lang === "bn" ? toBn(n) : String(n));
 
   return (
@@ -42,6 +43,9 @@ export function SimulatorBar() {
           <Button onClick={() => advance(7)} disabled={busy || !state}>{t.sim.plus7}</Button>
           <Button onClick={jumpToPayday} disabled={busy || !state} tone="primary">{t.sim.payday}</Button>
           <Button onClick={reset} disabled={busy} tone="quiet">{t.sim.reset}</Button>
+          <span title={t.sim.demoHint}>
+            <Button onClick={demoMode} disabled={busy}>★ {t.sim.demo}</Button>
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 lg:ml-auto">
           <span className="text-xs text-muted">{t.sim.scenarios}:</span>
@@ -70,13 +74,13 @@ export function SimulatorBar() {
           {t.apiDown}: {error}
         </div>
       )}
-      {guide && (
+      {g && (
         <div className="mx-auto max-w-7xl px-4 pb-3">
           <div className="rounded-lg border border-accent/40 bg-accent-soft p-3 text-sm">
             <div className="mb-2 flex items-start justify-between gap-3">
               <div className="font-semibold">
-                {guide.scenario.slice(0, 2).toUpperCase()} · {guide.title}{" "}
-                <span className="font-normal text-muted">— {guide.persona.name}</span>
+                {g.scenario.slice(0, 2).toUpperCase()} · {g.title}{" "}
+                <span className="font-normal text-muted">— {g.persona.name}</span>
               </div>
               <button type="button" onClick={closeGuide} className="text-xs text-muted hover:text-ink">{t.guide.close}</button>
             </div>
@@ -85,7 +89,7 @@ export function SimulatorBar() {
                 <div key={k}>
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted">{t.guide[k]}</div>
                   <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                    {(guide[k].length ? guide[k] : ["—"]).map((line) => (
+                    {(g[k].length ? g[k] : ["—"]).map((line) => (
                       <li key={line}>{line}</li>
                     ))}
                   </ul>
