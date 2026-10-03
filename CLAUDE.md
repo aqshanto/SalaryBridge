@@ -51,7 +51,7 @@ The final two lines (Status and Next) are the verdict. If the status is PARTIAL 
   - clear error messages;
   - CORS allow-list from env;
   - `/health` endpoint.
-- **Tests:** each backend feature adds pytest tests. Keep tests fast (< 30s total where possible).
+- **Tests:** each backend feature adds pytest tests. Keep the quick loop (`-m "not slow and not integration"`) under ~30s: tests on the full-size world are marked `integration` automatically, end-to-end training is `slow`. Every new responsible-AI control gets a row in `docs/responsible_ai.md` naming its test.
 - **Frontend:**
   - mobile-first employee view;
   - EN/BN toggle (English is the source of truth);

@@ -13,7 +13,14 @@ uv pip install --python .venv/Scripts/python.exe -r requirements.txt
 .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
-For a quick run, skip the end-to-end training tests with `.venv/Scripts/python.exe -m pytest -m "not slow"`.
+Test groups (all run by plain `pytest`):
+
+- quick loop, about 20 s: `.venv/Scripts/python.exe -m pytest -m "not slow and not integration"`
+- `integration`: API tests on the full-size simulated world (marked automatically)
+- `slow`: end-to-end model training and full validation runs
+
+Responsible-AI and security controls, with the test guarding each one: `docs/responsible_ai.md`.
+Validation report (generated, never hand-edited): `.venv/Scripts/python.exe -m scripts.validate` → `docs/validation_report.md`.
 
 Models are trained offline and the artifacts in `backend/artifacts/` are committed. Retrain in order (M2 uses M1):
 

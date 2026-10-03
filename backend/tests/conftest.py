@@ -54,3 +54,10 @@ def full_client(full_seed_url, tmp_path_factory):
         yield TestClient(app)
     for cached in CACHES:
         cached.cache_clear()
+
+
+def pytest_collection_modifyitems(config, items):
+    """Tests that drive the API on the full-size world are integration tests (quick loop: -m "not slow and not integration")."""
+    for item in items:
+        if "full_client" in getattr(item, "fixturenames", ()):
+            item.add_marker(pytest.mark.integration)
