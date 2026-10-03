@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Databases are rebuilt from the seed
+*.db
+*.db-journal
+
+# Secrets
+.env
+.env.local
+!.env.example
+
+# Node
+node_modules/
+.next/
+out/
+
+# Scratch extracts
+guideline.txt
+guideline_clean.txt
