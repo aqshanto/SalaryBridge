@@ -28,7 +28,7 @@ from sqlalchemy import (
 
 from app.ledger.money import is_paisa
 
-SYSTEM_ACCOUNTS = {"upay_capital", "upay_pool", "fees_income", "loss_provision"}
+SYSTEM_ACCOUNTS = {"upay_capital", "upay_pool", "fees_income", "loss_provision", "external_spend"}
 ACCOUNT_PREFIXES = ("employee_wallet:", "employer:", "receivable:")
 _ID = re.compile(r"^[A-Za-z0-9_\-]+$")
 

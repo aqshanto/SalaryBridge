@@ -94,6 +94,9 @@ class ProfileParams:
     # Multiplies every industry salary range
     salary_scale: float = 1.0
 
+    # Live simulation only: share of the last wage credit still in a upay wallet on the next payday
+    wallet_savings_share: float = 0.10
+
 
 # Profile B is a held-out stress world: harsher employers, lower wages, earlier and shifted surges,
 # more churn and more risky borrowers. Models never train on it.

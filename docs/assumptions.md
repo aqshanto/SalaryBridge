@@ -68,6 +68,9 @@ Values below are the defaults in `ProfileParams`. Change the code and this table
 | Recovery step 2: wallet auto-debit (with consent) | succeeds 50% if salary goes to upay, otherwise 15%; within the grace period | [ASSUMPTION] |
 | Recovery step 3: carry-over | if still employed and the employer still pays: recovered next payday 80% of the time | [ASSUMPTION] |
 | Recovery step 4: write-off | remaining balance written off `writeoff_after_days` after the due date | [ASSUMPTION] |
+| Live simulation: spending | an advance is spent (cash-out or payments) the day after it is paid; wages paid into a upay wallet are spent during the month, leaving 10% of the last wage credit (`wallet_savings_share`) on the next payday | [ASSUMPTION] |
+| Live simulation: wallet auto-debit consent | everyone who takes an advance consents to the wallet step of the recovery waterfall | [ASSUMPTION] |
+| Live simulation: wages via upay | on payday the employer remits the total deduction once, and staff paid via upay receive net wages (gross minus their deduction) | Design rule |
 | Model label ("recovery failure") | not fully recovered by due date + `grace_days` (includes late payroll beyond grace) | Design rule |
 | Audit-only attributes | gender (share female by industry) and region (rural share by industry) are used only for fairness checks, never as model features | Design rule |
 

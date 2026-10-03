@@ -11,93 +11,29 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import Boolean, Column, Date, Engine, Float, Integer, MetaData, String, Table, create_engine, delete, func, insert, select, update
+from sqlalchemy import Engine, Table, create_engine, delete, func, insert, select, update
 from sqlalchemy.pool import NullPool
 
 from app.config import Settings
 from app.ledger import Ledger, bdt_to_paisa, paisa_to_bdt
+from app.sim import settlement
+from app.sim.tables import (  # noqa: F401  (re-exported for services and tests)
+    metadata,
+    sim_advances,
+    sim_closed_employers,
+    sim_decisions,
+    sim_meta,
+    sim_overrides,
+    sim_payroll_runs,
+    sim_repayments,
+    sim_resignations,
+    sim_reviews,
+)
 from app.sim.world import SeedWorld
 from data.generator import _add_months, draw_payroll_outcome
 
 SESSION_ID = re.compile(r"^[A-Za-z0-9\-]{8,64}$")
 MAX_ADVANCE_DAYS = 120
-
-metadata = MetaData()
-
-sim_meta = Table(
-    "sim_meta",
-    metadata,
-    Column("key", String(40), primary_key=True),
-    Column("value", String(200), nullable=False),
-)
-
-sim_payroll_runs = Table(
-    "sim_payroll_runs",
-    metadata,
-    Column("employer_id", String(10), primary_key=True),
-    Column("work_month", String(7), primary_key=True),
-    Column("scheduled_date", Date, nullable=False),
-    Column("actual_date", Date),
-    Column("status", String(10), nullable=False),
-    Column("delay_days", Integer, nullable=False),
-    Column("paid_share", Float, nullable=False),
-    Column("paid", Boolean, nullable=False, default=False),
-)
-
-sim_closed_employers = Table(
-    "sim_closed_employers",
-    metadata,
-    Column("employer_id", String(10), primary_key=True),
-    Column("closed_on", Date, nullable=False),
-)
-
-# Advances paid out in this session (written when an offer is accepted, F13).
-sim_advances = Table(
-    "sim_advances",
-    metadata,
-    Column("advance_id", String(20), primary_key=True),
-    Column("decision_id", String(20), nullable=False),
-    Column("employee_id", String(30), nullable=False, index=True),
-    Column("employer_id", String(10), nullable=False),
-    Column("work_month", String(7), nullable=False),
-    Column("issue_date", Date, nullable=False),
-    Column("amount_requested", Integer, nullable=False),
-    Column("hard_cap", Integer, nullable=False),
-    Column("amount", Integer, nullable=False),
-    Column("fee", Integer, nullable=False),
-    Column("due_date", Date, nullable=False),
-    Column("grace_end", Date, nullable=False),
-    Column("tier", String(1), nullable=False),
-    Column("status", String(12), nullable=False),  # open | recovered | carried_over | written_off
-    Column("recovered_by_grace", Boolean),
-    Column("settled_date", Date),
-)
-
-# Every offer decision, with its inputs and model versions (audit log).
-sim_decisions = Table(
-    "sim_decisions",
-    metadata,
-    Column("decision_id", String(20), primary_key=True),
-    Column("sim_date", Date, nullable=False),
-    Column("employee_id", String(30), nullable=False, index=True),
-    Column("requested_bdt", Integer, nullable=False),
-    Column("status", String(10), nullable=False),
-    Column("approved_bdt", Integer, nullable=False),
-    Column("payload", String, nullable=False),  # JSON: inputs, features, outputs, model versions
-)
-
-# What happened to a decision afterwards: accepted by the employee, or approved/rejected by ops.
-sim_reviews = Table(
-    "sim_reviews",
-    metadata,
-    Column("decision_id", String(20), primary_key=True),
-    Column("action", String(10), nullable=False),  # accepted | approved | rejected
-    Column("actor", String(20), nullable=False),  # employee | ops
-    Column("note", String(500)),
-    Column("sim_date", Date, nullable=False),
-    Column("amount_bdt", Integer, nullable=False),
-    Column("advance_id", String(20)),
-)
 
 
 class SessionError(ValueError):
@@ -188,7 +124,7 @@ class SimSession:
             self._set_sim_date(day)
         return events
 
-    # ---------- payroll ----------
+    # ---------- employers, people, scenarios ----------
     def closed_employers(self) -> dict[str, date]:
         with self.engine.connect() as conn:
             return {r.employer_id: r.closed_on for r in conn.execute(select(sim_closed_employers))}
@@ -196,6 +132,25 @@ class SimSession:
     def open_employer_ids(self) -> list[str]:
         closed = self.closed_employers()
         return [e for e in self.world.employers.index if e not in closed]
+
+    def resignation(self, employee_id: str) -> date | None:
+        with self.engine.connect() as conn:
+            return settlement.end_date(conn, employee_id)
+
+    def resign(self, employee_id: str, end: date, reason: str = "voluntary") -> None:
+        if employee_id not in self.world.employees.index:
+            raise SessionError(f"Unknown or inactive employee: {employee_id}")
+        with self.engine.begin() as conn:
+            conn.execute(delete(sim_resignations).where(sim_resignations.c.employee_id == employee_id))
+            conn.execute(insert(sim_resignations).values(employee_id=employee_id, end_date=end, reason=reason))
+
+    def force_payroll(self, employer_id: str, work_month: str, status: str, delay_days: int = 0, paid_share: float = 1.0) -> None:
+        """Make an upcoming payroll run come out a certain way (scenario buttons)."""
+        if employer_id not in self.world.employers.index:
+            raise SessionError(f"Unknown employer: {employer_id}")
+        with self.engine.begin() as conn:
+            conn.execute(delete(sim_overrides).where(sim_overrides.c.employer_id == employer_id, sim_overrides.c.work_month == work_month))
+            conn.execute(insert(sim_overrides).values(employer_id=employer_id, work_month=work_month, status=status, delay_days=delay_days, paid_share=paid_share))
 
     def next_payday(self, employer_id: str | None = None) -> date:
         ids = [employer_id] if employer_id else self.open_employer_ids()
@@ -211,6 +166,7 @@ class SimSession:
             candidates.append(d)
         return min(candidates)
 
+    # ---------- payroll and settlement ----------
     def _previous_status(self, conn, employer_id: str) -> str:
         last = conn.execute(
             select(sim_payroll_runs.c.status)
@@ -222,32 +178,47 @@ class SimSession:
 
     def _run_day(self, day: date) -> list[dict]:
         events = []
+        settlement.spend_new_advances(self, day)
         work_month = _add_months(day.replace(day=1), -1)
+        defaulted = []
         with self.engine.begin() as conn:
             if work_month >= self.world.first_live_month:
                 for eid in self.open_employer_ids():
                     emp = self.world.employers.loc[eid]
                     if int(emp["payroll_day"]) != day.day:
                         continue
-                    events.append(self._schedule_run(conn, eid, emp, work_month, day))
+                    event = self._schedule_run(conn, eid, emp, work_month, day)
+                    events.append(event)
+                    if event["status"] == "default":
+                        defaulted.append(eid)
             due = conn.execute(
                 select(sim_payroll_runs).where(sim_payroll_runs.c.actual_date == day, sim_payroll_runs.c.paid.is_(False))
             ).all()
+        for eid in defaulted:
+            # No wages and no remittance: try wallets, then everything waits for write-off.
+            events += settlement.wallet_and_carry(self, eid, day, day, employer_open=False)
         for run in due:
-            events.append(self._pay_run(run, day))
+            events += self._pay_run(run, day)
+        events += settlement.daily_checks(self, day)
         return events
 
     def _schedule_run(self, conn, employer_id: str, emp, work_month: date, day: date) -> dict:
-        month_number = work_month.year * 12 + work_month.month
-        employer_number = int(employer_id[1:])
-        rng = np.random.default_rng([self.world.seed, employer_number, month_number])
-        prev_late = self._previous_status(conn, employer_id) in ("late", "partial")
-        status, delay, paid_share = draw_payroll_outcome(rng, self.world.profile, emp["reliability_type"], prev_late)
+        month_key = work_month.isoformat()[:7]
+        forced = conn.execute(
+            select(sim_overrides).where(sim_overrides.c.employer_id == employer_id, sim_overrides.c.work_month == month_key)
+        ).first()
+        if forced is not None:
+            status, delay, paid_share = forced.status, forced.delay_days, forced.paid_share
+        else:
+            month_number = work_month.year * 12 + work_month.month
+            rng = np.random.default_rng([self.world.seed, int(employer_id[1:]), month_number])
+            prev_late = self._previous_status(conn, employer_id) in ("late", "partial")
+            status, delay, paid_share = draw_payroll_outcome(rng, self.world.profile, emp["reliability_type"], prev_late)
         actual = None if status == "default" else day + timedelta(days=delay)
         conn.execute(
             insert(sim_payroll_runs).values(
                 employer_id=employer_id,
-                work_month=work_month.isoformat()[:7],
+                work_month=month_key,
                 scheduled_date=day,
                 actual_date=actual,
                 status=status,
@@ -262,47 +233,60 @@ class SimSession:
             "date": day.isoformat(),
             "type": "payroll_default" if status == "default" else "payroll_scheduled",
             "employer_id": employer_id,
-            "work_month": work_month.isoformat()[:7],
+            "work_month": month_key,
             "status": status,
             "actual_date": actual.isoformat() if actual else None,
+            "forced": forced is not None,
         }
 
-    def _pay_run(self, run, day: date) -> dict:
-        """Wages are paid outside upay except for staff who receive salary in their upay wallet."""
+    def _pay_run(self, run, day: date) -> list[dict]:
+        """Employer pays: one bulk deduction remittance, then net wages into wallets of staff paid via upay."""
+        withheld, events = settlement.employer_remittance(self, run, day)
+
+        with self.engine.connect() as conn:
+            gone = {
+                r.employee_id
+                for r in conn.execute(select(sim_resignations).where(sim_resignations.c.end_date < run.scheduled_date))
+            }
         staff = self.world.employees[
             (self.world.employees["employer_id"] == run.employer_id) & self.world.employees["salary_to_upay"].astype(bool)
         ]
         share_pct = round(run.paid_share * 100)
-        credits = [
-            (f"employee_wallet:{eid}", bdt_to_paisa(int(salary)) * share_pct // 100)
-            for eid, salary in staff["salary_bdt"].items()
-        ]
-        credits = [(account, amount) for account, amount in credits if amount > 0]
+        settlement.spend_down_wallets(self, {e: s for e, s in staff["salary_bdt"].items() if e not in gone}, day)
+        credits = []
+        for eid, salary in staff["salary_bdt"].items():
+            if eid in gone:
+                continue
+            gross = bdt_to_paisa(int(salary)) * share_pct // 100
+            net = gross - bdt_to_paisa(withheld.get(eid, 0))
+            if net > 0:
+                credits.append((f"employee_wallet:{eid}", net))
         total = sum(amount for _, amount in credits)
         if credits:
-            self.ledger.post_entry(
-                day,
-                "salary_credit",
-                credits + [(f"employer:{run.employer_id}", -total)],
-                ref=f"{run.employer_id}:{run.work_month}",
-            )
+            self.ledger.post_entry(day, "salary_credit", credits + [(f"employer:{run.employer_id}", -total)], ref=f"{run.employer_id}:{run.work_month}")
         with self.engine.begin() as conn:
             conn.execute(
                 update(sim_payroll_runs)
                 .where(sim_payroll_runs.c.employer_id == run.employer_id, sim_payroll_runs.c.work_month == run.work_month)
                 .values(paid=True)
             )
-        return {
-            "date": day.isoformat(),
-            "type": "payroll_paid",
-            "employer_id": run.employer_id,
-            "work_month": run.work_month,
-            "status": run.status,
-            "wallet_credits": len(credits),
-            "wallet_total_bdt": paisa_to_bdt(total),
-        }
+        events.insert(
+            0,
+            {
+                "date": day.isoformat(),
+                "type": "payroll_paid",
+                "employer_id": run.employer_id,
+                "work_month": run.work_month,
+                "status": run.status,
+                "wallet_credits": len(credits),
+                "wallet_total_bdt": paisa_to_bdt(total),
+                "remitted_bdt": sum(withheld.values()),
+            },
+        )
+        events += settlement.wallet_and_carry(self, run.employer_id, run.scheduled_date, day, employer_open=run.employer_id not in self.closed_employers())
+        return events
 
-    # ---------- reads used by the decision service ----------
+    # ---------- reads used by the services ----------
     @property
     def kill_switch(self) -> bool:
         with self.engine.connect() as conn:
@@ -322,6 +306,13 @@ class SimSession:
             query = query.where(sim_advances.c.employee_id == employee_id)
         with self.engine.connect() as conn:
             return pd.DataFrame(conn.execute(query).mappings().all(), columns=[c.name for c in sim_advances.columns])
+
+    def repayments_df(self, advance_id: str | None = None) -> pd.DataFrame:
+        query = select(sim_repayments).order_by(sim_repayments.c.repayment_id)
+        if advance_id:
+            query = query.where(sim_repayments.c.advance_id == advance_id)
+        with self.engine.connect() as conn:
+            return pd.DataFrame(conn.execute(query).mappings().all(), columns=[c.name for c in sim_repayments.columns])
 
     def next_id(self, table: Table, prefix: str) -> str:
         with self.engine.connect() as conn:
@@ -350,9 +341,7 @@ class SimSession:
         today = self.sim_date
         recon = self.ledger.reconcile()
         with self.engine.connect() as conn:
-            runs = conn.execute(
-                select(sim_payroll_runs).order_by(sim_payroll_runs.c.scheduled_date.desc()).limit(10)
-            ).all()
+            runs = conn.execute(select(sim_payroll_runs).order_by(sim_payroll_runs.c.scheduled_date.desc()).limit(10)).all()
         next_day = self.next_payday() if self.open_employer_ids() else None
         return {
             "session_id": self.session_id,
@@ -364,7 +353,9 @@ class SimSession:
             "days_to_next_payday": (next_day - today).days if next_day else None,
             "open_employers": len(self.open_employer_ids()),
             "closed_employers": sorted(self.closed_employers()),
+            "kill_switch": self.kill_switch,
             "pool_bdt": paisa_to_bdt(self.ledger.balance("upay_pool")),
+            "advances": settlement.summary(self),
             "ledger": {"reconciled": recon.ok, "entries": recon.entries, "total_paisa": recon.total_paisa},
             "recent_payroll_runs": [
                 {

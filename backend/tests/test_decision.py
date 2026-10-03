@@ -105,3 +105,10 @@ def test_every_decision_is_logged_with_inputs_and_versions(client, personas):
 def test_unknown_employee_is_a_400(client):
     r = client.post("/advance/offer", json={"employee_id": "NOPE", "amount_bdt": 1_000}, headers=H)
     assert r.status_code == 400
+
+
+def test_offer_after_a_live_payday_works(client, personas):
+    """Regression: seed (text) and live (date) payroll dates used to crash M1 feature sorting."""
+    client.post("/sim/advance-time", json={"days": 15}, headers=H)
+    d = offer(client, personas["rahim"]["employee_id"], 1_000)
+    assert d["status"] in {"offered", "queued"} and d["sim_date"] == "2026-11-04"

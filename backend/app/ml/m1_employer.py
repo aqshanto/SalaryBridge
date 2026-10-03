@@ -84,7 +84,7 @@ def observed_runs(runs: pd.DataFrame, as_of: date, grace_days: int) -> pd.DataFr
     past["obs_late"] = (
         (past["obs_partial"] == 1) | (past["obs_delay"] > grace_days) | (past["status"].eq("default") & (elapsed > grace_days))
     ).astype(int)
-    return past.sort_values("scheduled_date")
+    return past.sort_values("scheduled_date", key=pd.to_datetime)
 
 
 def employer_features(employer: pd.Series, runs: pd.DataFrame, as_of: date, grace_days: int) -> dict:

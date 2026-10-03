@@ -85,6 +85,8 @@ def _employee_history(session: SimSession, employee_id: str) -> pd.DataFrame:
     if not live.empty:
         live = live[seed.columns.tolist()]
         seed = pd.concat([seed, live], ignore_index=True)
+    for col in ("issue_date", "due_date", "settled_date"):
+        seed[col] = pd.to_datetime(seed[col])
     return seed
 
 
@@ -108,7 +110,11 @@ def _employer_runs(session: SimSession, employer_id: str) -> pd.DataFrame:
     seed = session.world.payroll_runs[session.world.payroll_runs["employer_id"] == employer_id]
     cols = ["employer_id", "scheduled_date", "actual_date", "status", "delay_days", "paid_share"]
     live = session.payroll_runs_df(employer_id)
-    return pd.concat([seed[cols], live[cols]], ignore_index=True) if not live.empty else seed[cols]
+    runs = pd.concat([seed[cols], live[cols]], ignore_index=True) if not live.empty else seed[cols].copy()
+    # Seed dates come back from SQLite as text, live ones as date objects: use one type.
+    for col in ("scheduled_date", "actual_date"):
+        runs[col] = pd.to_datetime(runs[col])
+    return runs
 
 
 def _requests_history(session: SimSession, employee_id: str, history: pd.DataFrame) -> pd.DataFrame:
@@ -141,12 +147,13 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
     employer = world.employers_all.set_index("employer_id", drop=False).loc[person["employer_id"]]
     as_of = session.sim_date
     closed = person["employer_id"] in session.closed_employers()
+    left = session.resignation(employee_id)
 
     history = _employee_history(session, employee_id)
     live = session.advances_df(employee_id)
     rules = evaluate(
         EmployerContext(employer["employer_id"], int(employer["payroll_day"]), bool(employer["opted_in"]), closed),
-        EmployeeContext(employee_id, int(person["salary_bdt"]), pd.Timestamp(person["hire_date"]).date(), True),
+        EmployeeContext(employee_id, int(person["salary_bdt"]), pd.Timestamp(person["hire_date"]).date(), left is None or left > as_of),
         _history_context(history, live, as_of),
         RequestContext(as_of=as_of, amount_bdt=int(amount_bdt), kill_switch=session.kill_switch),
         policy,

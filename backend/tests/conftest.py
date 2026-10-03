@@ -40,9 +40,10 @@ def sim_env(small_seed_url, tmp_path, monkeypatch):
         cached.cache_clear()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def full_client(full_seed_url, tmp_path_factory):
-    """A TestClient on the full seed. Module scope: the world and personas load once per test file."""
+    """A TestClient on the full seed. Session scope: the world and personas load once per run.
+    Tests that use it must reset their own simulation session."""
     with pytest.MonkeyPatch.context() as mp:
         mp.setenv("DATABASE_URL", full_seed_url)
         mp.setenv("SIM_DIR", str(tmp_path_factory.mktemp("sessions")))
