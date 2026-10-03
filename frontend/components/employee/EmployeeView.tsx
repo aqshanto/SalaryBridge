@@ -90,7 +90,7 @@ function HistoryList({ items }: { items: HistoryItem[] }) {
           <li key={h.advance_id} className="flex items-center justify-between gap-3 py-2 text-sm">
             <div>
               <div className="font-medium tabular-nums">{money(h.amount_bdt, lang)}</div>
-              <div className="text-xs text-muted">{shortDate(h.issue_date, lang)}{h.source === "history" ? "" : " · live"}</div>
+              <div className="text-xs text-muted">{shortDate(h.issue_date, lang)}{h.source === "history" ? "" : ` · ${t.live}`}</div>
             </div>
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}>
               {t.employee.status[h.status] ?? h.status}
@@ -125,9 +125,11 @@ function Done({ accepted, before, onBack }: { accepted: Accepted; before: number
 }
 
 export function EmployeeView() {
-  const { t, lang, sessionId, version, epoch, refresh } = useSim();
+  const { t, lang, sessionId, version, epoch, demoEpoch, refresh } = useSim();
   const [personas, setPersonas] = useState<Persona[]>([]);
-  const [selected, setSelected] = useState<string>("rahim");
+  // The chosen person belongs to the current Demo-mode epoch; Demo mode returns to Rahim.
+  const [choice, setChoice] = useState({ key: "rahim", demo: 0 });
+  const selected = choice.demo === demoEpoch ? choice.key : "rahim";
   const [summary, setSummary] = useState<EmployeeSummary | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
   const [stored, setStage] = useState<Stage>({ kind: "home", epoch: 0 });
@@ -154,7 +156,7 @@ export function EmployeeView() {
   }, [sessionId, person, version]);
 
   const pick = (key: string) => {
-    setSelected(key);
+    setChoice({ key, demo: demoEpoch });
     setChosen(null);
     setStage({ kind: "home", epoch });
     setError(null);
