@@ -1,5 +1,5 @@
-import { Placeholder } from "@/components/Placeholder";
+import { OpsView } from "@/components/ops/OpsView";
 
 export default function Page() {
-  return <Placeholder role="ops" />;
+  return <OpsView />;
 }

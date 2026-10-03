@@ -42,8 +42,8 @@ function describe(e: SimEvent, lang: "en" | "bn"): string {
 
 export function LedgerPanel() {
   const { t, lang, state, events } = useSim();
-  if (!state) return null;
-  const b = state.ledger.balances_bdt;
+  const b = state?.ledger?.balances_bdt;
+  if (!state || !b) return null; // e.g. a response from an older API version
   const rows: Row[] = [
     { key: "upay_capital", label: t.ledger.capital, value: -b.upay_capital },
     { key: "upay_pool", label: t.ledger.pool, value: b.upay_pool },
