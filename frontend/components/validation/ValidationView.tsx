@@ -140,7 +140,7 @@ export function ValidationView() {
   }, [sessionId]);
 
   if (error) return <div className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad" role="alert">{error}</div>;
-  if (!data) return <p className="text-sm text-muted">…</p>;
+  if (!data) return <p className="text-sm text-muted" role="status">{t.loading}</p>;
   const a = data.profile_a;
   const b = data.profile_b;
   const num = (n: number) => (lang === "bn" ? toBn(n) : String(n));

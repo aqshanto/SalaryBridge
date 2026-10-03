@@ -117,7 +117,7 @@ export function CapitalChart({ forecast }: { forecast: CapitalForecast }) {
       <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">
         <span>{t.ops.forecastNote} ({forecast.model_version})</span>
         <button type="button" onClick={() => setTable((v) => !v)} className="font-medium text-accent hover:underline">
-          {table ? "Chart" : t.ops.tableView}
+          {table ? t.chartView : t.ops.tableView}
         </button>
       </div>
     </div>

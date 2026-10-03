@@ -15,6 +15,8 @@ const en = {
     scenarios: "Scenarios",
     killOn: "Kill switch ON: new advances paused",
     busy: "Working…",
+    demo: "Demo mode",
+    demoHint: "Reset and open Rahim on the employee screen",
   },
   scenarios: {
     s1: "Happy path",
@@ -224,6 +226,10 @@ const en = {
     assumptionsTitle: "Policy assumptions in force",
     assumptionsNote: "All are [ASSUMPTION]s listed in docs/assumptions.md, not upay policy.",
   },
+  loading: "Loading…",
+  tier: "Tier",
+  live: "this session",
+  chartView: "Chart",
   apiDown: "Cannot reach the API",
   placeholder: "This view is built in a later step.",
 };
@@ -243,6 +249,8 @@ const bn: typeof en = {
     scenarios: "দৃশ্য",
     killOn: "কিল সুইচ চালু: নতুন আগাম বন্ধ",
     busy: "চলছে…",
+    demo: "ডেমো মোড",
+    demoHint: "রিসেট করে কর্মীর স্ক্রিনে রহিমকে খুলুন",
   },
   scenarios: {
     s1: "স্বাভাবিক পথ",
@@ -452,6 +460,10 @@ const bn: typeof en = {
     assumptionsTitle: "চালু নীতির অনুমানগুলো",
     assumptionsNote: "সবগুলো docs/assumptions.md-এ লেখা [ASSUMPTION], upay-র নীতি নয়।",
   },
+  loading: "লোড হচ্ছে…",
+  tier: "স্তর",
+  live: "এই সেশন",
+  chartView: "চার্ট",
   apiDown: "API-তে পৌঁছানো যাচ্ছে না",
   placeholder: "এই অংশ পরের ধাপে তৈরি হবে।",
 };

@@ -76,6 +76,7 @@ export type ScenarioResult = {
   setup: string[];
   try: string[];
   expect: string[];
+  bn?: { title: string; setup: string[]; try: string[]; expect: string[] };
   state: SimState;
 };
 
