@@ -39,11 +39,9 @@ plan and sleeps after 15 idle minutes, so the first request can take about a min
 break-even fee ৳49 (A) / ৳60 (B). Responsible-AI controls and the test guarding each one:
 [`docs/responsible_ai.md`](docs/responsible_ai.md).
 
-Slides: [`docs/presentation/SalaryBridge.pptx`](docs/presentation/SalaryBridge.pptx) · demo script:
-[`docs/demo_script.md`](docs/demo_script.md) · deploy: [`docs/deploy.md`](docs/deploy.md).
+Demo script: [`docs/demo_script.md`](docs/demo_script.md) · deploy: [`docs/deploy.md`](docs/deploy.md).
 
-Design documents: `plan.md` (how it works), `plot.md` (what users see), `prompt.md` (feature order), `CLAUDE.md`
-(build rules).
+Design documents: `plan.md` (how it works), `plot.md` (what users see).
 
 Track: **03 · Customer Innovation & Financial Independence** (responsible credit readiness), with capital
 forecasting from the Merchant & Agent Intelligence track.
