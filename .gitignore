@@ -18,6 +18,9 @@ node_modules/
 .next/
 out/
 
+# Office lock files (created while a .pptx/.docx is open)
+~$*
+
 # Scratch extracts
 guideline.txt
 guideline_clean.txt
