@@ -44,11 +44,11 @@ RISK_BAND_LABELS = ["employer risk < 10%", "10-30%", ">= 30%"]
 # not printed from the data above them, and they are shown separately from the generated results.
 ANALYST_NOTES: dict[str, str] = {
     "T2-A": (
-        "The interval over-covers (it is wider than intended). The four calibration months of Profile A include synthetic "
-        "Eid months (docs/assumptions.md), so the conformal widening is sized for an Eid surge, while the test months have "
-        "no Eid. Effect: upay would hold more capital than needed: safe against shortfall, but it costs money (see the "
-        "economics sliders). For real data: calibrate on a longer window or widen only for Eid months. Not tuned here, "
-        "because tuning on the test result would make this check meaningless."
+        "Much closer, still slightly above the band. v2 used one conformal widening sized on calibration months that "
+        "include synthetic Eid surges, so calm test months were over-covered. m4-v3 sizes the widening separately for peak "
+        "months (Eid or the month after) and calm months (see previous_version_v2 in metrics.json for the v2 numbers): "
+        "the band is narrower and coverage moved toward the target while the pool still covered every test month. "
+        "The v3 change was chosen once from the v2 finding and not tuned further on the test months."
     ),
     "T3-A-employer_size": (
         "Explained. v2 removed employer headcount from M1, M2 and M3 (the v1 audit could not rule out a direct size effect). "

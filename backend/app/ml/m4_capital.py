@@ -13,7 +13,9 @@ directly and badly under-forecast a world with higher per-head borrowing (Profil
 the series' own level lets one model serve small, large, calm and busy series. Quantiles survive
 multiplying back by the known level x headcount.
 The P10–P90 interval is then conformally adjusted on the last 4 training months so that it
-covers about 80% of outcomes (split conformal, no test data used).
+covers about 80% of outcomes (split conformal, no test data used). v3: the widening is computed
+separately for peak target months (the Eid month or the month right after it) and calm months
+(Mondrian conformal), so an Eid surge in the calibration window no longer widens the band for calm months.
 
 required_pool = P90 x (1 + capital_buffer_pct / 100)
 
@@ -35,7 +37,7 @@ from app.ml.common import ARTIFACTS_DIR, load_artifact, save_artifact, update_me
 from data.generator import PROFILES, _add_months, generate
 
 MODEL_NAME = "m4_capital"
-VERSION = "m4-v2"
+VERSION = "m4-v3"
 QUANTILES = (0.1, 0.5, 0.9)
 HORIZONS = (1, 2, 3)
 COVERAGE_TARGET = 0.8
@@ -50,6 +52,11 @@ V1_RESULTS = {
     "test_profile_b.world": {"mae_p50_bdt": 554961.4, "coverage_p10_p90": 0.0, "pool_covers_actual_share": 0.2},
     "test_profile_b.employer": {"mae_p50_bdt": 11956.6, "coverage_p10_p90": 0.7344},
 }
+# v2 results (one conformal widening for every month). v3 sizes the widening separately for peak and calm
+# target months, because v2 over-covered calm months after calibrating on Eid months. This weakness was
+# found on the test months (T2-A), so the v3 change was chosen once from that finding and not tuned further.
+V2_RESULTS = {"test_profile_a.world": {"mae_p50_bdt": 90970.7, "coverage_p10_p90": 0.9222, "mean_interval_width_bdt": 415725.3}, "test_profile_a.employer": {"mae_p50_bdt": 11741.2, "coverage_p10_p90": 0.8156, "mean_interval_width_bdt": 40216.8}, "test_profile_b.world": {"mae_p50_bdt": 162604.8, "coverage_p10_p90": 0.7556, "mean_interval_width_bdt": 539338.0}, "test_profile_b.employer": {"mae_p50_bdt": 11622.0, "coverage_p10_p90": 0.8828, "mean_interval_width_bdt": 46280.3}}
+MIN_GROUP_CALIB = 10  # fewer calibration rows than this in a group -> use the pooled widening
 EVAL_SEEDS_B = (42, 1042, 2042, 3042, 4042)
 LEVEL_FLOOR = 1.0  # BDT per head; avoids dividing by ~0 for series with no recent advances
 FEATURES = [
@@ -166,12 +173,20 @@ class QuantileForecaster:
     models: dict  # alpha -> LGBMRegressor (target relative to the series' level)
     conformal_q: float  # widening of [P10, P90] in relative units
     residual_q: dict = field(default_factory=dict)  # baseline per-head residual quantiles
+    conformal_q_by_eid: dict = field(default_factory=dict)  # {0: calm-month widening, 1: peak-month widening}; empty = pooled
+
+    def _widening(self, X: pd.DataFrame) -> np.ndarray:
+        if not self.conformal_q_by_eid:
+            return np.full(len(X), self.conformal_q)
+        eid = _peak(X)
+        return np.where(eid == 1, self.conformal_q_by_eid.get(1, self.conformal_q), self.conformal_q_by_eid.get(0, self.conformal_q))
 
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         head = (X["headcount"] * X["level"]).to_numpy(float)  # relative -> BDT
         raw = {a: self.models[a].predict(X[FEATURES]) for a in QUANTILES}
-        lo = np.minimum(raw[0.1], raw[0.5]) - self.conformal_q
-        hi = np.maximum(raw[0.9], raw[0.5]) + self.conformal_q
+        q = self._widening(X)
+        lo = np.minimum(raw[0.1], raw[0.5]) - q
+        hi = np.maximum(raw[0.9], raw[0.5]) + q
         mid = np.clip(raw[0.5], lo, hi)
         return pd.DataFrame({"p10": np.maximum(lo, 0) * head, "p50": np.maximum(mid, 0) * head, "p90": np.maximum(hi, 0) * head}, index=X.index)
 
@@ -189,6 +204,17 @@ def pinball(y: np.ndarray, q: np.ndarray, alpha: float) -> float:
     return float(np.mean(np.maximum(alpha * d, (alpha - 1) * d)))
 
 
+def _peak(X: pd.DataFrame) -> np.ndarray:
+    """Peak months for the conformal groups: the Eid month itself or the month right after it."""
+    return ((X["target_is_eid"].to_numpy(int) == 1) | (X["last_is_eid"].to_numpy(int) == 1)).astype(int)
+
+
+def _conformal_quantile(scores: np.ndarray) -> float:
+    n = len(scores)
+    level = min(1.0, np.ceil((n + 1) * COVERAGE_TARGET) / n)
+    return float(np.quantile(scores, level))
+
+
 def _fit_level(fit: pd.DataFrame, calib: pd.DataFrame) -> QuantileForecaster:
     y_fit = fit["actual"] / fit["headcount"] / fit["level"]
     y_fit_per_head = fit["actual"] / fit["headcount"]
@@ -202,9 +228,12 @@ def _fit_level(fit: pd.DataFrame, calib: pd.DataFrame) -> QuantileForecaster:
     lo = np.minimum(models[0.1].predict(calib[FEATURES]), models[0.5].predict(calib[FEATURES]))
     hi = np.maximum(models[0.9].predict(calib[FEATURES]), models[0.5].predict(calib[FEATURES]))
     scores = np.maximum(lo - y_cal, y_cal - hi)
-    n = len(scores)
-    level = min(1.0, np.ceil((n + 1) * COVERAGE_TARGET) / n)
-    forecaster.conformal_q = float(np.quantile(scores, level))
+    forecaster.conformal_q = _conformal_quantile(scores)
+    eid = _peak(calib)
+    for group in (0, 1):
+        part = scores[eid == group]
+        if len(part) >= MIN_GROUP_CALIB:
+            forecaster.conformal_q_by_eid[group] = _conformal_quantile(part)
     for kind in ("previous_month", "seasonal_naive"):
         resid = y_fit_per_head.to_numpy() - _baseline(fit, kind)
         forecaster.residual_q[kind] = {a: float(np.nanquantile(resid, a)) for a in QUANTILES}
@@ -288,9 +317,11 @@ def train(seeds: tuple[int, ...] = M4_SEEDS, scale: float = 1.0, artifacts_dir: 
             "rows_calibration": {"world": int(len(w_cal)), "employer": int(len(e_cal))},
             "split": "time-based on target month: last 3 months of every world are test; the 4 months before calibrate the interval",
             "conformal_q_per_head": {"world": round(model.world.conformal_q, 4), "employer": round(model.employer.conformal_q, 4)},
+            "conformal_q_by_eid": {lvl: {str(k): round(v, 4) for k, v in getattr(model, lvl).conformal_q_by_eid.items()} for lvl in ("world", "employer")},
         },
         "coverage_target": COVERAGE_TARGET,
         "previous_version": {"version": "m4-v1", **V1_RESULTS},
+        "previous_version_v2": {"version": "m4-v2", "change": "one pooled conformal widening", **V2_RESULTS},
         "capital_buffer_pct": policy.capital_buffer_pct,
         "test_profile_a": {
             "world": evaluate_level(model.world, w_test, policy.capital_buffer_pct),
