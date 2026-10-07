@@ -51,6 +51,16 @@ sim_employer_settings = Table(
     Column("cap_pct", Float, nullable=False),
 )
 
+# Attendance feed from the employer's time-card system (Phase 2): unpaid absence days per work month.
+sim_attendance = Table(
+    "sim_attendance",
+    metadata,
+    Column("employee_id", String(20), primary_key=True),
+    Column("work_month", String(7), primary_key=True),
+    Column("unpaid_absent_days", Integer, nullable=False),
+    Column("received_on", Date, nullable=False),
+)
+
 # HR acknowledgements of a deduction notice ("we will remit this total on payday").
 sim_notice_acks = Table(
     "sim_notice_acks",

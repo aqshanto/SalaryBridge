@@ -41,6 +41,9 @@ class PolicyParams(BaseModel):
     # Debt-trap guard
     cooling_off_consecutive_months: int = 3
     cooling_off_months: int = 1
+    dependency_lookback_months: int = 6
+    dependency_months_threshold: int = 4
+    dependency_limit_reduction_pct: float = 50.0
 
     # Human oversight and fairness
     large_amount_threshold_bdt: int = 10_000

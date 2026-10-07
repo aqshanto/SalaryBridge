@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
+import threading
 import time
 from datetime import date, timedelta
 from pathlib import Path
@@ -20,6 +21,7 @@ from app.sim import settlement
 from app.sim.tables import (  # noqa: F401  (re-exported for services and tests)
     metadata,
     sim_advances,
+    sim_attendance,
     sim_closed_employers,
     sim_decisions,
     sim_employer_settings,
@@ -59,6 +61,17 @@ def cleanup_expired(settings: Settings) -> int:
     return removed
 
 
+# The first page load sends several requests with a brand-new session id at once; without a lock two of them
+# create and initialise the same SQLite file and one fails ("table sim_meta already exists").
+_OPEN_LOCKS: dict[str, threading.Lock] = {}
+_OPEN_LOCKS_GUARD = threading.Lock()
+
+
+def _open_lock(session_id: str) -> threading.Lock:
+    with _OPEN_LOCKS_GUARD:
+        return _OPEN_LOCKS.setdefault(session_id, threading.Lock())
+
+
 class SimSession:
     def __init__(self, session_id: str, settings: Settings, world: SeedWorld):
         if not SESSION_ID.match(session_id):
@@ -70,6 +83,10 @@ class SimSession:
 
     # ---------- lifecycle ----------
     def open(self) -> "SimSession":
+        with _open_lock(self.session_id):
+            return self._open()
+
+    def _open(self) -> "SimSession":
         is_new = not self.path.exists()
         if is_new:
             cleanup_expired(self.settings)
@@ -82,8 +99,9 @@ class SimSession:
         return self
 
     def reset(self) -> "SimSession":
-        self.path.unlink(missing_ok=True)
-        return self.open()
+        with _open_lock(self.session_id):
+            self.path.unlink(missing_ok=True)
+            return self._open()
 
     def _initialise(self) -> None:
         start = self.world.first_live_month.replace(day=self.settings.sim_start_day)
@@ -171,6 +189,17 @@ class SimSession:
             conn.execute(delete(sim_employer_settings).where(sim_employer_settings.c.employer_id == employer_id))
             conn.execute(insert(sim_employer_settings).values(employer_id=employer_id, opted_in=opted_in, cap_pct=cap_pct))
         return self.employer_settings(employer_id)
+
+    def record_attendance(self, employee_id: str, work_month: str, unpaid_absent_days: int) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(delete(sim_attendance).where(sim_attendance.c.employee_id == employee_id, sim_attendance.c.work_month == work_month))
+            conn.execute(insert(sim_attendance).values(employee_id=employee_id, work_month=work_month, unpaid_absent_days=unpaid_absent_days, received_on=self.sim_date))
+
+    def unpaid_absence_days(self, employee_id: str, work_month: str) -> int | None:
+        with self.engine.connect() as conn:
+            return conn.execute(
+                select(sim_attendance.c.unpaid_absent_days).where(sim_attendance.c.employee_id == employee_id, sim_attendance.c.work_month == work_month)
+            ).scalar_one_or_none()
 
     def ack_notice(self, employer_id: str, payday: date, total_bdt: int) -> None:
         with self.engine.begin() as conn:

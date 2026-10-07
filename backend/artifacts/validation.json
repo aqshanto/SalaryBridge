@@ -1,5 +1,5 @@
 {
-  "generated_on": "2026-10-04",
+  "generated_on": "2026-10-07",
   "seeds": [
     42,
     1042,
@@ -30,37 +30,247 @@
         "loss_rate": 0.0095
       },
       "ml_tier": {
-        "approval_rate": 0.9024,
-        "queued_for_human": 671,
-        "funds_deployed_bdt": 24745300,
-        "loss_bdt": 153714,
-        "loss_rate": 0.0062,
+        "approval_rate": 0.9008,
+        "queued_for_human": 689,
+        "funds_deployed_bdt": 24319200,
+        "loss_bdt": 143819,
+        "loss_rate": 0.0059,
         "tier_counts": {
-          "A": 5300,
-          "B": 979,
-          "C": 610,
-          "D": 671
+          "A": 5045,
+          "B": 1162,
+          "C": 664,
+          "D": 689
         }
       },
       "equal_approval": {
-        "decline_share": 0.0976,
+        "decline_share": 0.0992,
         "flat_cap_random": 0.0095,
-        "tenure_rule": 0.0082,
-        "m2_rank": 0.0069,
+        "tenure_rule": 0.0081,
+        "m2_rank": 0.0065,
         "m3_rank": 0.0062,
-        "m2_m3_combined_rank": 0.0066
+        "m2_m3_combined_rank": 0.0061
       }
     },
     "economics_base": {
       "world_months": 15,
-      "advances_ml": 6822,
-      "funds_ml_bdt": 24745300,
-      "loss_ml_bdt": 153714,
+      "advances_ml": 6810,
+      "funds_ml_bdt": 24319200,
+      "loss_ml_bdt": 143819,
       "advances_flat": 7560,
       "funds_flat_bdt": 29710100,
       "loss_flat_bdt": 283027,
-      "avg_days_outstanding": 13.43,
-      "mean_monthly_funds_ml_bdt": 1649686
+      "avg_days_outstanding": 13.39,
+      "mean_monthly_funds_ml_bdt": 1621280,
+      "advances_by_band": {
+        "upto_5000": 3507,
+        "upto_2000": 2072,
+        "above_5000": 1231
+      },
+      "upay_payroll_employees": 1755
+    },
+    "pricing": {
+      "advances_per_month": 454.0,
+      "upay_payroll_employees": 1755,
+      "break_even_worker_fee_bdt": 48,
+      "scenarios": [
+        {
+          "key": "current_flat_25",
+          "worker_fee": {
+            "upto_2000": 25,
+            "upto_5000": 25,
+            "above_5000": 25
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 25.0,
+          "revenue": {
+            "worker": 11350,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 11350
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": -10044,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 23
+        },
+        {
+          "key": "worker_pays_break_even",
+          "worker_fee": {
+            "upto_2000": 48,
+            "upto_5000": 48,
+            "above_5000": 48
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 48.0,
+          "revenue": {
+            "worker": 21792,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 21792
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": 398,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 0
+        },
+        {
+          "key": "tiered_worker_fee",
+          "worker_fee": {
+            "upto_2000": 15,
+            "upto_5000": 25,
+            "above_5000": 40
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 24.67,
+          "revenue": {
+            "worker": 11200,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 11200
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": -10194,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 23
+        },
+        {
+          "key": "employer_copay_25",
+          "worker_fee": {
+            "upto_2000": 25,
+            "upto_5000": 25,
+            "above_5000": 25
+          },
+          "employer_copay_bdt": 25,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 25.0,
+          "revenue": {
+            "worker": 11350,
+            "employer_copay": 11350,
+            "payroll_fee": 0,
+            "total": 22700
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": 1306,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 23
+        },
+        {
+          "key": "payroll_fee_10_pepm",
+          "worker_fee": {
+            "upto_2000": 25,
+            "upto_5000": 25,
+            "above_5000": 25
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 10,
+          "recommended": false,
+          "avg_worker_fee_bdt": 25.0,
+          "revenue": {
+            "worker": 11350,
+            "employer_copay": 0,
+            "payroll_fee": 17550,
+            "total": 28900
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": 7506,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 0
+        },
+        {
+          "key": "worker_only_slab",
+          "worker_fee": {
+            "upto_2000": 30,
+            "upto_5000": 50,
+            "above_5000": 70
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 47.53,
+          "revenue": {
+            "worker": 21579,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 21579
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": 185,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 0
+        },
+        {
+          "key": "recommended_mix",
+          "worker_fee": {
+            "upto_2000": 15,
+            "upto_5000": 25,
+            "above_5000": 40
+          },
+          "employer_copay_bdt": 20,
+          "payroll_fee_pepm_bdt": 10,
+          "recommended": true,
+          "avg_worker_fee_bdt": 24.67,
+          "revenue": {
+            "worker": 11200,
+            "employer_copay": 9080,
+            "payroll_fee": 17550,
+            "total": 37830
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": 16436,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 0
+        }
+      ],
+      "assumptions": "Prices are [ASSUMPTION]; uptake is assumed equal in every scenario; costs follow plan.md \u00a710."
     },
     "recovery_share_by_step_flat_cap": {
       "employer_remittance": 0.9855,
@@ -73,22 +283,22 @@
         "groups": {
           "female": {
             "advances": 3243,
-            "ml_approval_rate": 0.9115,
-            "ml_mean_share_of_cap": 0.6643,
+            "ml_approval_rate": 0.9066,
+            "ml_mean_share_of_cap": 0.6521,
             "flat_cap_loss_rate": 0.0108,
-            "ml_loss_rate": 0.0068,
+            "ml_loss_rate": 0.0066,
             "rule_approval_rate": 0.9013
           },
           "male": {
             "advances": 4317,
-            "ml_approval_rate": 0.8955,
-            "ml_mean_share_of_cap": 0.6414,
+            "ml_approval_rate": 0.8965,
+            "ml_mean_share_of_cap": 0.6318,
             "flat_cap_loss_rate": 0.0086,
-            "ml_loss_rate": 0.0057,
+            "ml_loss_rate": 0.0054,
             "rule_approval_rate": 0.899
           }
         },
-        "ml_approval_gap_pp": 1.6,
+        "ml_approval_gap_pp": 1.01,
         "rule_approval_gap_pp": 0.23,
         "threshold_pp": 5.0,
         "within_threshold": true
@@ -97,22 +307,22 @@
         "groups": {
           "rural": {
             "advances": 3073,
-            "ml_approval_rate": 0.9063,
-            "ml_mean_share_of_cap": 0.6668,
+            "ml_approval_rate": 0.903,
+            "ml_mean_share_of_cap": 0.6553,
             "flat_cap_loss_rate": 0.008,
-            "ml_loss_rate": 0.0046,
+            "ml_loss_rate": 0.0045,
             "rule_approval_rate": 0.8964
           },
           "urban": {
             "advances": 4487,
-            "ml_approval_rate": 0.8997,
-            "ml_mean_share_of_cap": 0.6405,
+            "ml_approval_rate": 0.8993,
+            "ml_mean_share_of_cap": 0.6304,
             "flat_cap_loss_rate": 0.0103,
-            "ml_loss_rate": 0.007,
+            "ml_loss_rate": 0.0066,
             "rule_approval_rate": 0.9025
           }
         },
-        "ml_approval_gap_pp": 0.66,
+        "ml_approval_gap_pp": 0.37,
         "rule_approval_gap_pp": 0.61,
         "threshold_pp": 5.0,
         "within_threshold": true
@@ -121,42 +331,42 @@
         "groups": {
           "large (250+)": {
             "advances": 2807,
-            "ml_approval_rate": 0.8782,
-            "ml_mean_share_of_cap": 0.625,
+            "ml_approval_rate": 0.8721,
+            "ml_mean_share_of_cap": 0.6112,
             "flat_cap_loss_rate": 0.0127,
-            "ml_loss_rate": 0.005,
+            "ml_loss_rate": 0.0044,
             "rule_approval_rate": 0.8974
           },
           "medium (100-249)": {
             "advances": 3401,
-            "ml_approval_rate": 0.9162,
-            "ml_mean_share_of_cap": 0.6658,
+            "ml_approval_rate": 0.915,
+            "ml_mean_share_of_cap": 0.6544,
             "flat_cap_loss_rate": 0.0088,
-            "ml_loss_rate": 0.0079,
+            "ml_loss_rate": 0.0077,
             "rule_approval_rate": 0.9014
           },
           "small (<100)": {
             "advances": 1352,
-            "ml_approval_rate": 0.9179,
-            "ml_mean_share_of_cap": 0.669,
+            "ml_approval_rate": 0.9246,
+            "ml_mean_share_of_cap": 0.6662,
             "flat_cap_loss_rate": 0.0045,
-            "ml_loss_rate": 0.0036,
+            "ml_loss_rate": 0.0039,
             "rule_approval_rate": 0.9019
           }
         },
-        "ml_approval_gap_pp": 3.97,
+        "ml_approval_gap_pp": 5.25,
         "rule_approval_gap_pp": 0.45,
         "threshold_pp": 5.0,
-        "within_threshold": true,
+        "within_threshold": false,
         "by_employer_risk_band": {
           "employer risk < 10%": {
             "large (250+)": {
-              "ml_approval_rate": 0.9924,
+              "ml_approval_rate": 0.9915,
               "advances": 2108
             },
             "medium (100-249)": {
-              "ml_approval_rate": 0.9922,
-              "advances": 2932
+              "ml_approval_rate": 0.9941,
+              "advances": 2903
             },
             "small (<100)": {
               "ml_approval_rate": 0.9907,
@@ -165,30 +375,30 @@
           },
           "10-30%": {
             "large (250+)": {
-              "ml_approval_rate": 0.7969,
-              "advances": 128
+              "ml_approval_rate": 0.9542,
+              "advances": 131
             },
             "medium (100-249)": {
-              "ml_approval_rate": 1.0,
-              "advances": 35
+              "ml_approval_rate": 0.9556,
+              "advances": 90
             },
             "small (<100)": {
-              "ml_approval_rate": 0.8846,
-              "advances": 52
+              "ml_approval_rate": 0.881,
+              "advances": 42
             }
           },
           ">= 30%": {
             "large (250+)": {
-              "ml_approval_rate": 0.4746,
-              "advances": 571
+              "ml_approval_rate": 0.4102,
+              "advances": 568
             },
             "medium (100-249)": {
-              "ml_approval_rate": 0.3963,
-              "advances": 434
+              "ml_approval_rate": 0.3431,
+              "advances": 408
             },
             "small (<100)": {
-              "ml_approval_rate": 0.2295,
-              "advances": 122
+              "ml_approval_rate": 0.3485,
+              "advances": 132
             }
           }
         }
@@ -198,33 +408,33 @@
       "m2_repayment_failure": {
         "n": 7560,
         "positive_rate": 0.1045,
-        "pr_auc": 0.418,
-        "roc_auc": 0.877,
-        "brier": 0.0754,
+        "pr_auc": 0.4335,
+        "roc_auc": 0.8727,
+        "brier": 0.0744,
         "calibration": [
           {
-            "mean_predicted": 0.0139,
-            "observed_rate": 0.0086,
+            "mean_predicted": 0.0153,
+            "observed_rate": 0.0106,
             "n": 1512
           },
           {
-            "mean_predicted": 0.0207,
-            "observed_rate": 0.0126,
+            "mean_predicted": 0.0231,
+            "observed_rate": 0.0192,
             "n": 1512
           },
           {
-            "mean_predicted": 0.0295,
-            "observed_rate": 0.0271,
+            "mean_predicted": 0.0327,
+            "observed_rate": 0.0198,
             "n": 1512
           },
           {
-            "mean_predicted": 0.0539,
-            "observed_rate": 0.0675,
+            "mean_predicted": 0.0608,
+            "observed_rate": 0.0761,
             "n": 1512
           },
           {
-            "mean_predicted": 0.2735,
-            "observed_rate": 0.4067,
+            "mean_predicted": 0.2676,
+            "observed_rate": 0.3968,
             "n": 1512
           }
         ]
@@ -232,33 +442,33 @@
       "m3_leaves_before_payday": {
         "n": 7560,
         "positive_rate": 0.0155,
-        "pr_auc": 0.0877,
-        "roc_auc": 0.8185,
-        "brier": 0.0147,
+        "pr_auc": 0.1114,
+        "roc_auc": 0.8273,
+        "brier": 0.0145,
         "calibration": [
           {
-            "mean_predicted": 0.0026,
+            "mean_predicted": 0.0024,
             "observed_rate": 0.0,
             "n": 1512
           },
           {
-            "mean_predicted": 0.0054,
-            "observed_rate": 0.0026,
+            "mean_predicted": 0.0052,
+            "observed_rate": 0.004,
             "n": 1512
           },
           {
-            "mean_predicted": 0.0093,
-            "observed_rate": 0.0079,
+            "mean_predicted": 0.009,
+            "observed_rate": 0.006,
             "n": 1512
           },
           {
-            "mean_predicted": 0.0174,
-            "observed_rate": 0.0212,
+            "mean_predicted": 0.0171,
+            "observed_rate": 0.0172,
             "n": 1512
           },
           {
-            "mean_predicted": 0.0507,
-            "observed_rate": 0.0456,
+            "mean_predicted": 0.0531,
+            "observed_rate": 0.0503,
             "n": 1512
           }
         ]
@@ -288,37 +498,247 @@
         "loss_rate": 0.0155
       },
       "ml_tier": {
-        "approval_rate": 0.8278,
-        "queued_for_human": 1559,
-        "funds_deployed_bdt": 22420100,
-        "loss_bdt": 296732,
-        "loss_rate": 0.0131,
+        "approval_rate": 0.8003,
+        "queued_for_human": 1850,
+        "funds_deployed_bdt": 21224000,
+        "loss_bdt": 255116,
+        "loss_rate": 0.0119,
         "tier_counts": {
-          "A": 3708,
-          "B": 2303,
-          "C": 2833,
-          "D": 1559
+          "A": 3340,
+          "B": 2281,
+          "C": 2932,
+          "D": 1850
         }
       },
       "equal_approval": {
-        "decline_share": 0.1722,
+        "decline_share": 0.1997,
         "flat_cap_random": 0.0155,
-        "tenure_rule": 0.0125,
-        "m2_rank": 0.0145,
-        "m3_rank": 0.0115,
-        "m2_m3_combined_rank": 0.0143
+        "tenure_rule": 0.0123,
+        "m2_rank": 0.0141,
+        "m3_rank": 0.0109,
+        "m2_m3_combined_rank": 0.0134
       }
     },
     "economics_base": {
       "world_months": 15,
-      "advances_ml": 8612,
-      "funds_ml_bdt": 22420100,
-      "loss_ml_bdt": 296732,
+      "advances_ml": 8326,
+      "funds_ml_bdt": 21224000,
+      "loss_ml_bdt": 255116,
       "advances_flat": 10403,
       "funds_flat_bdt": 34149100,
       "loss_flat_bdt": 533875,
-      "avg_days_outstanding": 18.57,
-      "mean_monthly_funds_ml_bdt": 1494673
+      "avg_days_outstanding": 18.24,
+      "mean_monthly_funds_ml_bdt": 1414933,
+      "advances_by_band": {
+        "upto_2000": 4180,
+        "upto_5000": 3446,
+        "above_5000": 700
+      },
+      "upay_payroll_employees": 1013
+    },
+    "pricing": {
+      "advances_per_month": 555.1,
+      "upay_payroll_employees": 1013,
+      "break_even_worker_fee_bdt": 55,
+      "scenarios": [
+        {
+          "key": "current_flat_25",
+          "worker_fee": {
+            "upto_2000": 25,
+            "upto_5000": 25,
+            "above_5000": 25
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 25.0,
+          "revenue": {
+            "worker": 13877,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 13877
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": -16485,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 30
+        },
+        {
+          "key": "worker_pays_break_even",
+          "worker_fee": {
+            "upto_2000": 55,
+            "upto_5000": 55,
+            "above_5000": 55
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 55.0,
+          "revenue": {
+            "worker": 30529,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 30529
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": 167,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 0
+        },
+        {
+          "key": "tiered_worker_fee",
+          "worker_fee": {
+            "upto_2000": 15,
+            "upto_5000": 25,
+            "above_5000": 40
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 21.24,
+          "revenue": {
+            "worker": 11790,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 11790
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": -18571,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 34
+        },
+        {
+          "key": "employer_copay_25",
+          "worker_fee": {
+            "upto_2000": 25,
+            "upto_5000": 25,
+            "above_5000": 25
+          },
+          "employer_copay_bdt": 25,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 25.0,
+          "revenue": {
+            "worker": 13877,
+            "employer_copay": 13877,
+            "payroll_fee": 0,
+            "total": 27753
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": -2608,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 30
+        },
+        {
+          "key": "payroll_fee_10_pepm",
+          "worker_fee": {
+            "upto_2000": 25,
+            "upto_5000": 25,
+            "above_5000": 25
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 10,
+          "recommended": false,
+          "avg_worker_fee_bdt": 25.0,
+          "revenue": {
+            "worker": 13877,
+            "employer_copay": 0,
+            "payroll_fee": 10130,
+            "total": 24007
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": -6355,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 12
+        },
+        {
+          "key": "worker_only_slab",
+          "worker_fee": {
+            "upto_2000": 30,
+            "upto_5000": 50,
+            "above_5000": 70
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 41.64,
+          "revenue": {
+            "worker": 23113,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 23113
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": -7248,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 14
+        },
+        {
+          "key": "recommended_mix",
+          "worker_fee": {
+            "upto_2000": 15,
+            "upto_5000": 25,
+            "above_5000": 40
+          },
+          "employer_copay_bdt": 20,
+          "payroll_fee_pepm_bdt": 10,
+          "recommended": true,
+          "avg_worker_fee_bdt": 21.24,
+          "revenue": {
+            "worker": 11790,
+            "employer_copay": 11101,
+            "payroll_fee": 10130,
+            "total": 33021
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": 2660,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 16
+        }
+      ],
+      "assumptions": "Prices are [ASSUMPTION]; uptake is assumed equal in every scenario; costs follow plan.md \u00a710."
     },
     "recovery_share_by_step_flat_cap": {
       "employer_remittance": 0.9764,
@@ -331,22 +751,22 @@
         "groups": {
           "female": {
             "advances": 4361,
-            "ml_approval_rate": 0.8404,
-            "ml_mean_share_of_cap": 0.5221,
+            "ml_approval_rate": 0.8085,
+            "ml_mean_share_of_cap": 0.494,
             "flat_cap_loss_rate": 0.0153,
-            "ml_loss_rate": 0.0145,
+            "ml_loss_rate": 0.0134,
             "rule_approval_rate": 0.8448
           },
           "male": {
             "advances": 6042,
-            "ml_approval_rate": 0.8188,
-            "ml_mean_share_of_cap": 0.4991,
+            "ml_approval_rate": 0.7944,
+            "ml_mean_share_of_cap": 0.4752,
             "flat_cap_loss_rate": 0.0157,
-            "ml_loss_rate": 0.0121,
+            "ml_loss_rate": 0.0109,
             "rule_approval_rate": 0.8448
           }
         },
-        "ml_approval_gap_pp": 2.16,
+        "ml_approval_gap_pp": 1.41,
         "rule_approval_gap_pp": 0.0,
         "threshold_pp": 5.0,
         "within_threshold": true
@@ -355,22 +775,22 @@
         "groups": {
           "rural": {
             "advances": 4251,
-            "ml_approval_rate": 0.8259,
-            "ml_mean_share_of_cap": 0.5137,
+            "ml_approval_rate": 0.796,
+            "ml_mean_share_of_cap": 0.4891,
             "flat_cap_loss_rate": 0.0165,
-            "ml_loss_rate": 0.0146,
+            "ml_loss_rate": 0.0129,
             "rule_approval_rate": 0.8443
           },
           "urban": {
             "advances": 6152,
-            "ml_approval_rate": 0.8292,
-            "ml_mean_share_of_cap": 0.5053,
+            "ml_approval_rate": 0.8033,
+            "ml_mean_share_of_cap": 0.4789,
             "flat_cap_loss_rate": 0.015,
-            "ml_loss_rate": 0.0123,
+            "ml_loss_rate": 0.0113,
             "rule_approval_rate": 0.8452
           }
         },
-        "ml_approval_gap_pp": 0.33,
+        "ml_approval_gap_pp": 0.73,
         "rule_approval_gap_pp": 0.09,
         "threshold_pp": 5.0,
         "within_threshold": true
@@ -379,74 +799,74 @@
         "groups": {
           "large (250+)": {
             "advances": 3665,
-            "ml_approval_rate": 0.7801,
-            "ml_mean_share_of_cap": 0.4745,
+            "ml_approval_rate": 0.7744,
+            "ml_mean_share_of_cap": 0.4573,
             "flat_cap_loss_rate": 0.0127,
-            "ml_loss_rate": 0.0096,
+            "ml_loss_rate": 0.0086,
             "rule_approval_rate": 0.8418
           },
           "medium (100-249)": {
             "advances": 5016,
-            "ml_approval_rate": 0.8714,
-            "ml_mean_share_of_cap": 0.5375,
+            "ml_approval_rate": 0.8232,
+            "ml_mean_share_of_cap": 0.5018,
             "flat_cap_loss_rate": 0.0162,
-            "ml_loss_rate": 0.0144,
+            "ml_loss_rate": 0.0136,
             "rule_approval_rate": 0.8509
           },
           "small (<100)": {
             "advances": 1722,
-            "ml_approval_rate": 0.8026,
-            "ml_mean_share_of_cap": 0.4978,
+            "ml_approval_rate": 0.7892,
+            "ml_mean_share_of_cap": 0.4834,
             "flat_cap_loss_rate": 0.0193,
-            "ml_loss_rate": 0.0161,
+            "ml_loss_rate": 0.0133,
             "rule_approval_rate": 0.8339
           }
         },
-        "ml_approval_gap_pp": 9.13,
+        "ml_approval_gap_pp": 4.88,
         "rule_approval_gap_pp": 1.7,
         "threshold_pp": 5.0,
-        "within_threshold": false,
+        "within_threshold": true,
         "by_employer_risk_band": {
           "employer risk < 10%": {
             "large (250+)": {
-              "ml_approval_rate": 0.9742,
-              "advances": 1627
+              "ml_approval_rate": 0.9663,
+              "advances": 1633
             },
             "medium (100-249)": {
-              "ml_approval_rate": 0.9821,
-              "advances": 2913
+              "ml_approval_rate": 0.9835,
+              "advances": 2785
             },
             "small (<100)": {
-              "ml_approval_rate": 0.9811,
-              "advances": 954
+              "ml_approval_rate": 0.9881,
+              "advances": 921
             }
           },
           "10-30%": {
             "large (250+)": {
-              "ml_approval_rate": 0.9248,
-              "advances": 758
+              "ml_approval_rate": 0.9098,
+              "advances": 765
             },
             "medium (100-249)": {
-              "ml_approval_rate": 0.8827,
-              "advances": 1100
+              "ml_approval_rate": 0.8831,
+              "advances": 898
             },
             "small (<100)": {
-              "ml_approval_rate": 0.7707,
-              "advances": 314
+              "ml_approval_rate": 0.8622,
+              "advances": 283
             }
           },
           ">= 30%": {
             "large (250+)": {
-              "ml_approval_rate": 0.4477,
-              "advances": 1280
+              "ml_approval_rate": 0.4451,
+              "advances": 1267
             },
             "medium (100-249)": {
-              "ml_approval_rate": 0.5374,
-              "advances": 1003
+              "ml_approval_rate": 0.4479,
+              "advances": 1333
             },
             "small (<100)": {
-              "ml_approval_rate": 0.4493,
-              "advances": 454
+              "ml_approval_rate": 0.3958,
+              "advances": 518
             }
           }
         }
@@ -456,33 +876,33 @@
       "m2_repayment_failure": {
         "n": 10403,
         "positive_rate": 0.2673,
-        "pr_auc": 0.4871,
-        "roc_auc": 0.7964,
-        "brier": 0.1899,
+        "pr_auc": 0.4944,
+        "roc_auc": 0.8018,
+        "brier": 0.1829,
         "calibration": [
           {
-            "mean_predicted": 0.0198,
-            "observed_rate": 0.0077,
+            "mean_predicted": 0.0225,
+            "observed_rate": 0.0043,
             "n": 2081
           },
           {
-            "mean_predicted": 0.0416,
-            "observed_rate": 0.0365,
+            "mean_predicted": 0.0484,
+            "observed_rate": 0.0466,
             "n": 2081
           },
           {
-            "mean_predicted": 0.0919,
-            "observed_rate": 0.3445,
+            "mean_predicted": 0.1075,
+            "observed_rate": 0.3268,
             "n": 2081
           },
           {
-            "mean_predicted": 0.1607,
-            "observed_rate": 0.4409,
+            "mean_predicted": 0.181,
+            "observed_rate": 0.4221,
             "n": 2080
           },
           {
-            "mean_predicted": 0.3317,
-            "observed_rate": 0.5072,
+            "mean_predicted": 0.3511,
+            "observed_rate": 0.537,
             "n": 2080
           }
         ]
@@ -490,33 +910,33 @@
       "m3_leaves_before_payday": {
         "n": 10403,
         "positive_rate": 0.0302,
-        "pr_auc": 0.1248,
-        "roc_auc": 0.7722,
+        "pr_auc": 0.1294,
+        "roc_auc": 0.7737,
         "brier": 0.0279,
         "calibration": [
           {
-            "mean_predicted": 0.0036,
-            "observed_rate": 0.0043,
+            "mean_predicted": 0.0035,
+            "observed_rate": 0.0067,
             "n": 2081
           },
           {
             "mean_predicted": 0.0082,
-            "observed_rate": 0.0106,
+            "observed_rate": 0.0082,
             "n": 2081
           },
           {
-            "mean_predicted": 0.0152,
+            "mean_predicted": 0.015,
             "observed_rate": 0.0173,
             "n": 2081
           },
           {
-            "mean_predicted": 0.0282,
-            "observed_rate": 0.0322,
+            "mean_predicted": 0.0279,
+            "observed_rate": 0.0317,
             "n": 2080
           },
           {
-            "mean_predicted": 0.0757,
-            "observed_rate": 0.0865,
+            "mean_predicted": 0.079,
+            "observed_rate": 0.087,
             "n": 2080
           }
         ]
@@ -560,38 +980,38 @@
         "roc_auc": 0.6767
       },
       "model": {
-        "brier": 0.0669,
+        "brier": 0.0658,
         "calibration": [
           {
-            "mean_predicted": 0.0051,
+            "mean_predicted": 0.0054,
             "n": 115,
             "observed_rate": 0.0
           },
           {
-            "mean_predicted": 0.0066,
+            "mean_predicted": 0.0067,
             "n": 114,
             "observed_rate": 0.0088
           },
           {
-            "mean_predicted": 0.0111,
+            "mean_predicted": 0.0117,
             "n": 114,
-            "observed_rate": 0.0175
+            "observed_rate": 0.0
           },
           {
-            "mean_predicted": 0.0252,
+            "mean_predicted": 0.0259,
             "n": 114,
-            "observed_rate": 0.0614
+            "observed_rate": 0.0702
           },
           {
-            "mean_predicted": 0.3641,
+            "mean_predicted": 0.3759,
             "n": 114,
-            "observed_rate": 0.4298
+            "observed_rate": 0.4386
           }
         ],
         "n": 571,
         "positive_rate": 0.1033,
-        "pr_auc": 0.4536,
-        "roc_auc": 0.9051
+        "pr_auc": 0.4564,
+        "roc_auc": 0.9139
       }
     },
     "test_profile_b": {
@@ -630,38 +1050,38 @@
         "roc_auc": 0.7573
       },
       "model": {
-        "brier": 0.157,
+        "brier": 0.1469,
         "calibration": [
           {
-            "mean_predicted": 0.0064,
+            "mean_predicted": 0.0069,
             "n": 110,
-            "observed_rate": 0.0091
+            "observed_rate": 0.0
           },
           {
-            "mean_predicted": 0.0167,
+            "mean_predicted": 0.0172,
             "n": 109,
-            "observed_rate": 0.0183
+            "observed_rate": 0.0275
           },
           {
-            "mean_predicted": 0.0754,
+            "mean_predicted": 0.0873,
             "n": 109,
-            "observed_rate": 0.156
+            "observed_rate": 0.1468
           },
           {
-            "mean_predicted": 0.2572,
+            "mean_predicted": 0.2924,
             "n": 109,
-            "observed_rate": 0.578
+            "observed_rate": 0.5596
           },
           {
-            "mean_predicted": 0.4555,
+            "mean_predicted": 0.4967,
             "n": 109,
-            "observed_rate": 0.5413
+            "observed_rate": 0.5688
           }
         ],
         "n": 546,
         "positive_rate": 0.2601,
-        "pr_auc": 0.5226,
-        "roc_auc": 0.8398
+        "pr_auc": 0.5463,
+        "roc_auc": 0.8493
       }
     }
   },
@@ -671,29 +1091,29 @@
         "actual_mean_bdt": 53679.7,
         "by_horizon": [
           {
-            "coverage_p10_p90": 0.8236,
+            "coverage_p10_p90": 0.8118,
             "horizon": 1,
             "mae_p50_bdt": 11671.6
           },
           {
-            "coverage_p10_p90": 0.8175,
+            "coverage_p10_p90": 0.8118,
             "horizon": 2,
             "mae_p50_bdt": 11766.4
           },
           {
-            "coverage_p10_p90": 0.8057,
+            "coverage_p10_p90": 0.7978,
             "horizon": 3,
             "mae_p50_bdt": 11785.6
           }
         ],
         "model": {
-          "coverage_p10_p90": 0.8156,
+          "coverage_p10_p90": 0.8071,
           "mae_p50_bdt": 11741.2,
-          "mean_interval_width_bdt": 40216.8,
+          "mean_interval_width_bdt": 39387.6,
           "pinball_bdt": {
-            "0.1": 2377.1,
+            "0.1": 2381.2,
             "0.5": 5870.6,
-            "0.9": 2997.5
+            "0.9": 2991.1
           }
         },
         "n": 6870,
@@ -720,29 +1140,29 @@
         "actual_mean_bdt": 2048776.7,
         "by_horizon": [
           {
-            "coverage_p10_p90": 0.9167,
+            "coverage_p10_p90": 0.7833,
             "horizon": 1,
             "mae_p50_bdt": 87303.6
           },
           {
-            "coverage_p10_p90": 0.9167,
+            "coverage_p10_p90": 0.8667,
             "horizon": 2,
             "mae_p50_bdt": 91951.2
           },
           {
-            "coverage_p10_p90": 0.9333,
+            "coverage_p10_p90": 0.9167,
             "horizon": 3,
             "mae_p50_bdt": 93657.2
           }
         ],
         "model": {
-          "coverage_p10_p90": 0.9222,
+          "coverage_p10_p90": 0.8556,
           "mae_p50_bdt": 90970.7,
-          "mean_interval_width_bdt": 415725.3,
+          "mean_interval_width_bdt": 364014.1,
           "pinball_bdt": {
-            "0.1": 23600.6,
+            "0.1": 21280.6,
             "0.5": 45485.3,
-            "0.9": 20459.3
+            "0.9": 21462.8
           }
         },
         "n": 180,
@@ -772,29 +1192,29 @@
         "actual_mean_bdt": 62544.1,
         "by_horizon": [
           {
-            "coverage_p10_p90": 0.8901,
+            "coverage_p10_p90": 0.8864,
             "horizon": 1,
             "mae_p50_bdt": 11694.4
           },
           {
-            "coverage_p10_p90": 0.8956,
+            "coverage_p10_p90": 0.8883,
             "horizon": 2,
             "mae_p50_bdt": 11415.0
           },
           {
-            "coverage_p10_p90": 0.8626,
+            "coverage_p10_p90": 0.8663,
             "horizon": 3,
             "mae_p50_bdt": 11756.6
           }
         ],
         "model": {
-          "coverage_p10_p90": 0.8828,
+          "coverage_p10_p90": 0.8803,
           "mae_p50_bdt": 11622.0,
-          "mean_interval_width_bdt": 46280.3,
+          "mean_interval_width_bdt": 45737.6,
           "pinball_bdt": {
-            "0.1": 2448.0,
+            "0.1": 2433.8,
             "0.5": 5811.0,
-            "0.9": 2871.2
+            "0.9": 2857.7
           }
         },
         "n": 1638,
@@ -826,7 +1246,7 @@
             "mae_p50_bdt": 174624.8
           },
           {
-            "coverage_p10_p90": 0.7333,
+            "coverage_p10_p90": 0.8,
             "horizon": 2,
             "mae_p50_bdt": 174692.8
           },
@@ -837,13 +1257,13 @@
           }
         ],
         "model": {
-          "coverage_p10_p90": 0.7556,
+          "coverage_p10_p90": 0.7778,
           "mae_p50_bdt": 162604.8,
-          "mean_interval_width_bdt": 539338.0,
+          "mean_interval_width_bdt": 507878.3,
           "pinball_bdt": {
-            "0.1": 36558.4,
+            "0.1": 35296.2,
             "0.5": 81302.4,
-            "0.9": 40426.8
+            "0.9": 39822.5
           }
         },
         "n": 45,
@@ -870,8 +1290,8 @@
     }
   },
   "analyst_notes": {
-    "T2-A": "The interval over-covers (it is wider than intended). The four calibration months of Profile A include synthetic Eid months (docs/assumptions.md), so the conformal widening is sized for an Eid surge, while the test months have no Eid. Effect: upay would hold more capital than needed: safe against shortfall, but it costs money (see the economics sliders). For real data: calibrate on a longer window or widen only for Eid months. Not tuned here, because tuning on the test result would make this check meaningless.",
-    "T3-B-employer_size": "Not fully explained. In the lowest employer-risk band, approval is about the same for every employer size (table above), so most of the overall gap comes from how many advances sit in the highest-risk band, which differs by size in these synthetic worlds. In the middle band, staff of small employers are approved less often than staff of large employers, on few advances. employer_headcount is a model feature, so a direct size effect cannot be ruled out. Next step: retrain M2/M3 without employer_headcount and re-run this audit; until then, a person should review requests in the 10-30% employer-risk band."
+    "T2-A": "Much closer, still slightly above the band. v2 used one conformal widening sized on calibration months that include synthetic Eid surges, so calm test months were over-covered. m4-v3 sizes the widening separately for peak months (Eid or the month after) and calm months (see previous_version_v2 in metrics.json for the v2 numbers): the band is narrower and coverage moved toward the target while the pool still covered every test month. The v3 change was chosen once from the v2 finding and not tuned further on the test months.",
+    "T3-A-employer_size": "Explained. v2 removed employer headcount from M1, M2 and M3 (the v1 audit could not rule out a direct size effect). Inside the lowest employer-risk band, approval is the same for every size (table above). The remaining gap is driven by how many advances sit in the highest employer-risk band, and it now runs against large employers, whose flat-cap loss rate is also the highest (table above); staff of small employers are approved most often. So the gap follows observed employer payroll reliability, not size. Requests in the 10-30% employer-risk band, where groups are small, stay eligible for human review."
   },
   "limits": [
     "synthetic data only",
@@ -884,72 +1304,72 @@
     {
       "id": "T1-A",
       "target": "ML-tier loss rate < flat-cap loss rate at an equal approval rate",
-      "value": "ML 0.0062 vs flat cap 0.0095 (ML approves 0.9024)",
+      "value": "ML 0.0059 vs flat cap 0.0095 (ML approves 0.9008)",
       "pass": true,
       "explained": false
     },
     {
       "id": "T1-B",
       "target": "ML-tier loss rate < flat-cap loss rate at an equal approval rate",
-      "value": "ML 0.0131 vs flat cap 0.0155 (ML approves 0.8278)",
+      "value": "ML 0.0119 vs flat cap 0.0155 (ML approves 0.8003)",
       "pass": true,
       "explained": false
     },
     {
       "id": "T2-A",
       "target": "M4 P10\u2013P90 coverage between 75% and 85% (total pool)",
-      "value": "0.9222",
+      "value": "0.8556",
       "pass": false,
       "explained": true
     },
     {
       "id": "T2-B",
       "target": "M4 P10\u2013P90 coverage between 75% and 85% (total pool)",
-      "value": "0.7556",
+      "value": "0.7778",
       "pass": true,
       "explained": false
     },
     {
       "id": "T3-A-gender",
       "target": "ML approval-rate gap across gender <= 5.0 pp (or explained)",
-      "value": "1.6 pp",
+      "value": "1.01 pp",
       "pass": true,
       "explained": false
     },
     {
       "id": "T3-A-region",
       "target": "ML approval-rate gap across region <= 5.0 pp (or explained)",
-      "value": "0.66 pp",
+      "value": "0.37 pp",
       "pass": true,
       "explained": false
     },
     {
       "id": "T3-A-employer_size",
       "target": "ML approval-rate gap across employer_size <= 5.0 pp (or explained)",
-      "value": "3.97 pp",
-      "pass": true,
-      "explained": false
+      "value": "5.25 pp",
+      "pass": false,
+      "explained": true
     },
     {
       "id": "T3-B-gender",
       "target": "ML approval-rate gap across gender <= 5.0 pp (or explained)",
-      "value": "2.16 pp",
+      "value": "1.41 pp",
       "pass": true,
       "explained": false
     },
     {
       "id": "T3-B-region",
       "target": "ML approval-rate gap across region <= 5.0 pp (or explained)",
-      "value": "0.33 pp",
+      "value": "0.73 pp",
       "pass": true,
       "explained": false
     },
     {
       "id": "T3-B-employer_size",
       "target": "ML approval-rate gap across employer_size <= 5.0 pp (or explained)",
-      "value": "9.13 pp",
-      "pass": false,
-      "explained": true
+      "value": "4.88 pp",
+      "pass": true,
+      "explained": false
     }
   ]
 }

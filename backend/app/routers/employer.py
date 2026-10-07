@@ -4,17 +4,28 @@ import csv
 import io
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from app.config import get_settings
+from app.integrations import payroll
 from app.routers.sim import get_session
 from app.sim import settlement
 from app.sim.personas import personas_for
 from app.sim.session import SessionError, SimSession
 
 router = APIRouter(prefix="/employer", tags=["employer"])
+
+
+class AttendanceRecord(BaseModel):
+    employee_id: str
+    unpaid_absent_days: int = Field(ge=0, le=31)
+    work_month: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}$")  # default: the current simulated month
+
+
+class AttendanceIn(BaseModel):
+    records: list[AttendanceRecord] = Field(min_length=1, max_length=5_000)
 
 
 class SettingsIn(BaseModel):
@@ -114,6 +125,55 @@ def deduction_notice_csv(employer_id: str, session: SimSession = Depends(get_ses
     writer.writerow(["TOTAL", "", "", "", "", notice["total_bdt"]])
     filename = f"deduction-notice-{employer_id}-{notice['payday'] or 'none'}.csv"
     return Response(out.getvalue(), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.post("/{employer_id}/attendance")
+def attendance_webhook(employer_id: str, body: AttendanceIn, session: SimSession = Depends(get_session)) -> dict:
+    """Time-card webhook: the employer's attendance system pushes unpaid absence days; limits update on the next request.
+
+    Only staff of this employer are accepted. Attendance changes earned wages (a rule input), never a model feature.
+    """
+    _check(session, employer_id)
+    staff = session.world.employees
+    month_default = session.sim_date.isoformat()[:7]
+    accepted, rejected = 0, []
+    for r in body.records:
+        if r.employee_id not in staff.index or staff.at[r.employee_id, "employer_id"] != employer_id:
+            rejected.append(r.employee_id)
+            continue
+        session.record_attendance(r.employee_id, r.work_month or month_default, r.unpaid_absent_days)
+        accepted += 1
+    return {"employer_id": employer_id, "accepted": accepted, "rejected": rejected}
+
+
+@router.post("/{employer_id}/payroll-import")
+async def payroll_import(employer_id: str, request: Request, fmt: str = "csv", mapping: str = "generic", session: SimSession = Depends(get_session)) -> dict:
+    """Import a payroll or time-card export (CSV or JSON) through a column-mapping adapter.
+
+    Unpaid absence days feed earned days, exactly like the attendance webhook. Salary figures are compared with
+    the records upay holds and differences are reported for HR to check; they are never applied silently.
+    """
+    _check(session, employer_id)
+    body = await request.body()
+    if len(body) > 5_000_000:
+        raise HTTPException(status_code=413, detail="File too large (max 5 MB)")
+    try:
+        records = payroll.parse(body.decode("utf-8", errors="strict"), fmt, mapping)
+    except (payroll.PayrollFormatError, UnicodeDecodeError) as exc:
+        raise HTTPException(status_code=400, detail=f"Payroll file rejected: {exc}") from exc
+    staff = session.world.employees
+    month = session.sim_date.isoformat()[:7]
+    accepted, unknown, salary_mismatch = 0, [], []
+    for r in records:
+        if r.employee_id not in staff.index or staff.at[r.employee_id, "employer_id"] != employer_id:
+            unknown.append(r.employee_id)
+            continue
+        session.record_attendance(r.employee_id, month, r.unpaid_absent_days)
+        accepted += 1
+        if r.net_salary_bdt is not None and r.net_salary_bdt != int(staff.at[r.employee_id, "salary_bdt"]):
+            salary_mismatch.append(r.employee_id)
+    return {"employer_id": employer_id, "format": fmt, "mapping": mapping, "rows": len(records), "accepted": accepted,
+            "unknown_staff": unknown[:50], "salary_mismatch_for_review": salary_mismatch[:50]}
 
 
 @router.get("/{employer_id}/settings")

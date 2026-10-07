@@ -31,13 +31,21 @@ plan and sleeps after 15 idle minutes, so the first request can take about a min
 
 | | Flat 20% cap (no AI) | SalaryBridge ML tiers |
 |---|---|---|
-| Loss rate, Profile A (training world) | 0.95% | **0.62%** |
-| Loss rate, Profile B (harsher stress world) | 1.55% | **1.31%** |
+| Loss rate, Profile A (training world) | 0.95% | **0.59%** |
+| Loss rate, Profile B (harsher stress world) | 1.55% | **1.19%** |
 
 8 of 10 targets declared up front pass; the 2 misses are shown with analyst notes in
-[`docs/validation_report.md`](docs/validation_report.md). Economics at the ৳25 fee: −৳10,876 per sandbox month;
-break-even fee ৳49 (A) / ৳60 (B). Responsible-AI controls and the test guarding each one:
+[`docs/validation_report.md`](docs/validation_report.md). Phase 2: employer headcount was removed from M1–M3, cutting the worst
+employer-size approval gap from 9.13 pp to 5.25 pp (Profile B now passes; the Profile A gap runs against large employers and is
+explained in the report). Economics at the ৳25 fee (v2 models): −৳10,044 per sandbox month; break-even worker fee ৳48 (A) / ৳55 (B).
+**Pricing engine (Phase 2):** a tiered worker fee (৳15/৳25/৳40 by size, average ≤ ৳25) plus a ৳20 employer co-pay and a ৳10 payroll
+fee per salary paid through upay is profitable in both worlds (+৳16,436 A / +৳2,660 B per month); all six scenarios are in the report
+and on the Validation page. Responsible-AI controls and the test guarding each one:
 [`docs/responsible_ai.md`](docs/responsible_ai.md).
+
+**Phase 2 changes (judge feedback → change → evidence): [`docs/phase2_changes.md`](docs/phase2_changes.md).**
+
+Integration and scale (Phase 2): payroll/time-card adapters, `/metrics`, load-test numbers in [`docs/scalability.md`](docs/scalability.md).
 
 Demo script: [`docs/demo_script.md`](docs/demo_script.md) · deploy: [`docs/deploy.md`](docs/deploy.md).
 

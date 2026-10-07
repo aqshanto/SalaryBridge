@@ -32,7 +32,7 @@ from app.rules.tiers import apply_attrition, tier_for
 from data.generator import generate
 
 MODEL_NAME = "m3_attrition"
-VERSION = "m3-v1"
+VERSION = "m3-v2"
 LEAVING_REASONS = ("voluntary", "abuse_pattern")
 FEATURES = [
     "tenure_days",
@@ -47,10 +47,9 @@ FEATURES = [
     "streak_months",
     "prior_failures",
     "employer_prob_late",
-    "employer_headcount",
     *m2.INDUSTRY_COLUMNS,
 ]
-FORBIDDEN_FEATURES = m2.FORBIDDEN_FEATURES
+FORBIDDEN_FEATURES = m2.FORBIDDEN_FEATURES  # employer headcount was also removed in v2 (fairness audit)
 
 REASONS = {
     "tenure_days": ("SHORT_TENURE", "LONG_TENURE"),

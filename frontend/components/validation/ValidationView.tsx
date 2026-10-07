@@ -28,7 +28,7 @@ function Verdict({ pass, explained }: { pass: boolean; explained?: boolean }) {
   );
 }
 
-type Econ = { fee: number; cap: number; rate: number; buffer: number; ops: number; stress: number };
+type Econ = { fee: number; copay: number; pepm: number; cap: number; rate: number; buffer: number; ops: number; stress: number };
 
 function economics(base: ProfileResult["economics_base"], e: Econ, baseCap: number) {
   const m = base.world_months;
@@ -36,12 +36,16 @@ function economics(base: ProfileResult["economics_base"], e: Econ, baseCap: numb
   const capScale = e.cap / baseCap;
   const funds = (base.funds_ml_bdt / m) * capScale;
   const loss = (base.loss_ml_bdt / m) * capScale * (1 + e.stress / 100);
-  const revenue = advances * e.fee;
+  const workerRevenue = advances * e.fee;
+  const copayRevenue = advances * e.copay;
+  const payrollRevenue = (base.upay_payroll_employees ?? 0) * e.pepm;
+  const revenue = workerRevenue + copayRevenue + payrollRevenue;
   const capital = funds * (base.avg_days_outstanding / 365) * (e.rate / 100);
   const idle = funds * (e.buffer / 100) * (30 / 365) * (e.rate / 100);
   const ops = advances * e.ops;
   const costs = loss + capital + idle + ops;
-  return { advances, funds, loss, revenue, capital, idle, ops, net: revenue - costs, breakEven: advances ? costs / advances : 0 };
+  const breakEven = advances ? Math.max(0, (costs - copayRevenue - payrollRevenue) / advances) : 0;
+  return { advances, funds, loss, workerRevenue, copayRevenue, payrollRevenue, revenue, capital, idle, ops, net: revenue - costs, breakEven };
 }
 
 function Slider({ label, value, min, max, step, onChange, format }: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; format: (v: number) => string }) {
@@ -64,6 +68,8 @@ function Economics({ data }: { data: ValidationData }) {
   const [profile, setProfile] = useState<"a" | "b">("a");
   const [e, setE] = useState<Econ>({
     fee: Number(policy.fee_flat_bdt),
+    copay: 0,
+    pepm: 0,
     cap: baseCap,
     rate: Number(policy.capital_rate_annual_pct),
     buffer: Number(policy.capital_buffer_pct),
@@ -94,6 +100,8 @@ function Economics({ data }: { data: ValidationData }) {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3">
           <Slider label={t.validation.fee} value={e.fee} min={0} max={100} step={5} onChange={set("fee")} format={(v) => money(v, lang)} />
+          <Slider label={t.validation.copay} value={e.copay} min={0} max={50} step={5} onChange={set("copay")} format={(v) => money(v, lang)} />
+          <Slider label={t.validation.pepm} value={e.pepm} min={0} max={30} step={1} onChange={set("pepm")} format={(v) => money(v, lang)} />
           <Slider label={t.validation.cap} value={e.cap} min={5} max={baseCap} step={5} onChange={set("cap")} format={(v) => `${num(v)}%`} />
           <Slider label={t.validation.capitalRate} value={e.rate} min={0} max={25} step={1} onChange={set("rate")} format={(v) => `${num(v)}%`} />
           <Slider label={t.validation.buffer} value={e.buffer} min={0} max={50} step={5} onChange={set("buffer")} format={(v) => `${num(v)}%`} />
@@ -107,7 +115,9 @@ function Economics({ data }: { data: ValidationData }) {
             <div className="flex justify-between gap-3"><dt className="text-muted">{t.validation.funds}</dt><dd className="tabular-nums">{money(r.funds, lang)}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-muted">{t.validation.daysOut} ({t.validation.measured})</dt><dd className="tabular-nums">{num(base.avg_days_outstanding)}</dd></div>
             <div className="my-2 border-t border-line" />
-            {row(t.validation.revenue, r.revenue, "+")}
+            {row(t.validation.revenue, r.workerRevenue, "+")}
+            {r.copayRevenue > 0 && row(t.validation.copayRevenue, r.copayRevenue, "+")}
+            {r.payrollRevenue > 0 && row(t.validation.payrollRevenue, r.payrollRevenue, "+")}
             {row(t.validation.lossCost, r.loss)}
             {row(t.validation.capitalCost, r.capital)}
             {row(t.validation.idleCost, r.idle)}
@@ -124,6 +134,54 @@ function Economics({ data }: { data: ValidationData }) {
           </dl>
           <p className="mt-3 text-xs text-muted">{t.validation.formula}</p>
         </div>
+      </div>
+    </Card>
+  );
+}
+
+function Pricing({ data }: { data: ValidationData }) {
+  const { t, lang } = useSim();
+  const [profile, setProfile] = useState<"a" | "b">("a");
+  const pricing = (profile === "a" ? data.profile_a : data.profile_b).pricing;
+  if (!pricing) return null;
+  return (
+    <Card title={t.validation.pricingTitle} note={t.validation.pricingNote}>
+      <div className="mb-3 flex gap-2" role="group">
+        {(["a", "b"] as const).map((p) => (
+          <button key={p} type="button" onClick={() => setProfile(p)} aria-pressed={profile === p}
+            className={`rounded-md border px-3 py-1 text-sm ${profile === p ? "border-accent bg-accent-soft" : "border-line"}`}>
+            {p === "a" ? t.validation.profileA : t.validation.profileB}
+          </button>
+        ))}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm" data-testid="pricing-table">
+          <thead>
+            <tr className="border-b border-line text-left text-muted">
+              <th className="py-1 pr-3 font-medium">{t.validation.scenario}</th>
+              <th className="py-1 pr-3 text-right font-medium">{t.validation.workerPays}</th>
+              <th className="py-1 pr-3 text-right font-medium">{t.validation.copayRevenue}</th>
+              <th className="py-1 pr-3 text-right font-medium">{t.validation.payrollRevenue}</th>
+              <th className="py-1 pr-3 text-right font-medium">{t.validation.netMonth}</th>
+              <th className="py-1 text-right font-medium">{t.validation.viable}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pricing.scenarios.map((s) => (
+              <tr key={s.key} className={`border-b border-line ${s.recommended ? "bg-accent-soft font-semibold" : ""}`}>
+                <td className="py-1.5 pr-3">
+                  {t.validation.scenarioNames[s.key] ?? s.key}
+                  {s.recommended && <span className="ml-2 rounded-full bg-good-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-good">{t.validation.recommended}</span>}
+                </td>
+                <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.avg_worker_fee_bdt, lang)}</td>
+                <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.employer_copay_bdt, lang)}</td>
+                <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.payroll_fee_pepm_bdt, lang)}</td>
+                <td className={`py-1.5 pr-3 text-right tabular-nums ${s.viable ? "text-good" : "text-bad"}`}>{s.net_bdt_per_month >= 0 ? "+" : "−"} {money(Math.abs(s.net_bdt_per_month), lang)}</td>
+                <td className="py-1.5 text-right">{s.viable ? `✓ ${t.validation.yes}` : `✗ ${t.validation.no}`}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Card>
   );
@@ -321,6 +379,8 @@ export function ValidationView() {
           </ul>
         </Card>
       )}
+
+      <Pricing data={data} />
 
       <Economics data={data} />
 

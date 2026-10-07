@@ -5,7 +5,8 @@ The calibrated probability maps to a tier (app/rules/tiers.py) that shrinks the 
 Point-in-time rules for features:
 - employer risk = M1 snapshot from day 1 or day 20, whichever is the latest on or before the issue date;
 - a past advance's outcome is used only if its grace period ended before the issue date;
-- gender, region, age band and the latent behaviour label are never features.
+- gender, region, age band and the latent behaviour label are never features;
+- employer headcount is not a feature (v2): it caused an employer-size approval gap in the v1 fairness audit.
 
 Known limitation: history only has outcomes for advances that were approved (by the pilot rules),
 so the model learns from approved advances only.
@@ -31,7 +32,7 @@ from app.rules.tiers import TIERS, tier_for, tiered_amount
 from data.generator import INDUSTRIES, generate
 
 MODEL_NAME = "m2_repayment"
-VERSION = "m2-v1"
+VERSION = "m2-v2"
 INDUSTRY_COLUMNS = [f"industry_{name}" for name in INDUSTRIES]
 FEATURES = [
     "tenure_days",
@@ -49,7 +50,6 @@ FEATURES = [
     "same_month_prior_ratio",
     "streak_months",
     "employer_prob_late",
-    "employer_headcount",
     *INDUSTRY_COLUMNS,
 ]
 FORBIDDEN_FEATURES = {"gender", "region", "age_band", "behaviour", "end_date", "end_reason", "reliability_type"}

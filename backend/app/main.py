@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app import observability
 from app.config import APP_VERSION, get_settings
 from app.routers import advance as advance_router
 from app.routers import config as config_router
@@ -30,6 +31,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    observability.install(app)
     app.include_router(config_router.router)
     app.include_router(sim_router.router)
     app.include_router(advance_router.router)

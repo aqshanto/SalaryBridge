@@ -158,3 +158,20 @@ def test_every_trace_item_is_machine_readable():
     for r in (run(), run(kill_switch=True), run(300)):
         for item in r.trace:
             assert item.code.isupper() and item.detail and isinstance(item.values, dict)
+
+
+def test_dependency_guard_halves_the_limit_for_habitual_use_with_gaps():
+    # 4 of the last 6 months, never 3 in a row: cooling-off does not fire, the dependency guard does.
+    habitual = HistoryContext(months_with_advance=frozenset({"2026-04", "2026-05", "2026-07", "2026-09"}))
+    r = run(5_000, history=habitual)
+    assert r.eligible and r.hard_cap_bdt == 1_800
+    assert "DEPENDENCY_NUDGE" in [t.code for t in r.trace]
+    occasional = HistoryContext(months_with_advance=frozenset({"2026-05", "2026-07", "2026-09"}))
+    assert "DEPENDENCY_NUDGE" not in [t.code for t in run(5_000, history=occasional).trace]
+
+
+def test_attendance_feed_lowers_earned_days():
+    full = run(5_000, as_of=date(2026, 10, 10))
+    absent = run(5_000, as_of=date(2026, 10, 10), earned_days=6)
+    assert absent.hard_cap_bdt < full.hard_cap_bdt
+    assert "ATTENDANCE_ADJUSTED" in [t.code for t in absent.trace]
