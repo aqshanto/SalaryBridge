@@ -104,3 +104,12 @@ def test_state_reports_grouped_ledger_balances_that_sum_to_zero(client, sim_env)
     assert set(balances) == {"upay_capital", "upay_pool", "employee_wallets", "employers", "fees_income", "loss_provision", "external_spend"}
     assert abs(sum(balances.values())) < 0.01
     assert balances["upay_pool"] == sim_env.policy.initial_pool_bdt and balances["upay_capital"] == -sim_env.policy.initial_pool_bdt
+
+
+def test_concurrent_first_requests_for_a_new_session_do_not_fail(full_client):
+    from concurrent.futures import ThreadPoolExecutor
+
+    h = {"X-Session-Id": "race-test-0001-new"}
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        codes = list(pool.map(lambda _: full_client.get("/sim/state", headers=h).status_code, range(6)))
+    assert codes == [200] * 6

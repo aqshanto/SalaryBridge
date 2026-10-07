@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
+import threading
 import time
 from datetime import date, timedelta
 from pathlib import Path
@@ -60,6 +61,17 @@ def cleanup_expired(settings: Settings) -> int:
     return removed
 
 
+# The first page load sends several requests with a brand-new session id at once; without a lock two of them
+# create and initialise the same SQLite file and one fails ("table sim_meta already exists").
+_OPEN_LOCKS: dict[str, threading.Lock] = {}
+_OPEN_LOCKS_GUARD = threading.Lock()
+
+
+def _open_lock(session_id: str) -> threading.Lock:
+    with _OPEN_LOCKS_GUARD:
+        return _OPEN_LOCKS.setdefault(session_id, threading.Lock())
+
+
 class SimSession:
     def __init__(self, session_id: str, settings: Settings, world: SeedWorld):
         if not SESSION_ID.match(session_id):
@@ -71,6 +83,10 @@ class SimSession:
 
     # ---------- lifecycle ----------
     def open(self) -> "SimSession":
+        with _open_lock(self.session_id):
+            return self._open()
+
+    def _open(self) -> "SimSession":
         is_new = not self.path.exists()
         if is_new:
             cleanup_expired(self.settings)
@@ -83,8 +99,9 @@ class SimSession:
         return self
 
     def reset(self) -> "SimSession":
-        self.path.unlink(missing_ok=True)
-        return self.open()
+        with _open_lock(self.session_id):
+            self.path.unlink(missing_ok=True)
+            return self._open()
 
     def _initialise(self) -> None:
         start = self.world.first_live_month.replace(day=self.settings.sim_start_day)
