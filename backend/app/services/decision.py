@@ -31,7 +31,7 @@ from app.sim.session import SimSession, sim_decisions
 
 CARRY_OVER_LOOKBACK_DAYS = 30
 PREVIEW_ID = "PREVIEW"
-INFORMATIVE_RULE_CODES = {"SALARY_CAP_LIMIT", "EARNED_DAYS_LIMIT", "CARRY_OVER_REDUCTION", "AMOUNT_REDUCED_TO_LIMIT", "LARGE_AMOUNT_REVIEW"}
+INFORMATIVE_RULE_CODES = {"SALARY_CAP_LIMIT", "EARNED_DAYS_LIMIT", "CARRY_OVER_REDUCTION", "DEPENDENCY_NUDGE", "ATTENDANCE_ADJUSTED", "AMOUNT_REDUCED_TO_LIMIT", "LARGE_AMOUNT_REVIEW"}
 
 
 class DecisionError(ValueError):
@@ -139,6 +139,12 @@ def _requests_history(session: SimSession, employee_id: str, history: pd.DataFra
     return pd.concat([seed, live_req], ignore_index=True)
 
 
+def _earned_days(session: SimSession, employee_id: str, as_of: date) -> int | None:
+    """Days worked so far this month from the employer's attendance feed; None = no feed (calendar days are used)."""
+    unpaid = session.unpaid_absence_days(employee_id, as_of.isoformat()[:7])
+    return None if unpaid is None else max(0, as_of.day - unpaid)
+
+
 def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: PolicyParams, preview: bool = False) -> Decision:
     """Run the full decision. preview=True runs the same pipeline without logging it (for 'you can get up to')."""
     world = session.world
@@ -162,7 +168,7 @@ def decide(session: SimSession, employee_id: str, amount_bdt: int, policy: Polic
         EmployerContext(employer["employer_id"], int(employer["payroll_day"]), hr["opted_in"], closed),
         EmployeeContext(employee_id, int(person["salary_bdt"]), pd.Timestamp(person["hire_date"]).date(), left is None or left > as_of),
         history_ctx,
-        RequestContext(as_of=as_of, amount_bdt=int(amount_bdt), kill_switch=session.kill_switch),
+        RequestContext(as_of=as_of, amount_bdt=int(amount_bdt), earned_days=_earned_days(session, employee_id, as_of), kill_switch=session.kill_switch),
         policy,
     )
 

@@ -94,3 +94,20 @@ def test_employer_can_lower_but_not_raise_the_cap(client, personas):
 def test_unknown_employer_is_404(client):
     assert client.get("/employer/E999/dashboard", headers=H).status_code == 404
     assert client.put("/employer/E999/settings", json={"opted_in": True, "cap_pct": 10}, headers=H).status_code == 404
+
+
+def test_attendance_webhook_lowers_the_limit_and_rejects_other_staff(full_client):
+    h = {"X-Session-Id": "attendance-test-0001"}
+    full_client.post("/sim/reset", headers=h)
+    rahim = next(p for p in full_client.get("/personas", headers=h).json() if p["key"] == "rahim")
+    before = full_client.post("/advance/offer", json={"employee_id": rahim["employee_id"], "amount_bdt": 20_000, "preview": True}, headers=h).json()
+    full_client.post("/sim/reset", headers=h)
+    r = full_client.post(
+        f"/employer/{rahim['employer_id']}/attendance",
+        json={"records": [{"employee_id": rahim["employee_id"], "unpaid_absent_days": 15}, {"employee_id": "NOT-STAFF", "unpaid_absent_days": 1}]},
+        headers=h,
+    )
+    assert r.status_code == 200 and r.json()["accepted"] == 1 and r.json()["rejected"] == ["NOT-STAFF"]
+    after = full_client.post("/advance/offer", json={"employee_id": rahim["employee_id"], "amount_bdt": 20_000}, headers=h).json()
+    assert after["hard_cap_bdt"] < before["hard_cap_bdt"]
+    assert "ATTENDANCE_ADJUSTED" in [x["code"] for x in after["reasons"]]

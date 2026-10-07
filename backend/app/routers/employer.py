@@ -17,6 +17,16 @@ from app.sim.session import SessionError, SimSession
 router = APIRouter(prefix="/employer", tags=["employer"])
 
 
+class AttendanceRecord(BaseModel):
+    employee_id: str
+    unpaid_absent_days: int = Field(ge=0, le=31)
+    work_month: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}$")  # default: the current simulated month
+
+
+class AttendanceIn(BaseModel):
+    records: list[AttendanceRecord] = Field(min_length=1, max_length=5_000)
+
+
 class SettingsIn(BaseModel):
     opted_in: bool
     cap_pct: float = Field(gt=0, le=100)
@@ -114,6 +124,25 @@ def deduction_notice_csv(employer_id: str, session: SimSession = Depends(get_ses
     writer.writerow(["TOTAL", "", "", "", "", notice["total_bdt"]])
     filename = f"deduction-notice-{employer_id}-{notice['payday'] or 'none'}.csv"
     return Response(out.getvalue(), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.post("/{employer_id}/attendance")
+def attendance_webhook(employer_id: str, body: AttendanceIn, session: SimSession = Depends(get_session)) -> dict:
+    """Time-card webhook: the employer's attendance system pushes unpaid absence days; limits update on the next request.
+
+    Only staff of this employer are accepted. Attendance changes earned wages (a rule input), never a model feature.
+    """
+    _check(session, employer_id)
+    staff = session.world.employees
+    month_default = session.sim_date.isoformat()[:7]
+    accepted, rejected = 0, []
+    for r in body.records:
+        if r.employee_id not in staff.index or staff.at[r.employee_id, "employer_id"] != employer_id:
+            rejected.append(r.employee_id)
+            continue
+        session.record_attendance(r.employee_id, r.work_month or month_default, r.unpaid_absent_days)
+        accepted += 1
+    return {"employer_id": employer_id, "accepted": accepted, "rejected": rejected}
 
 
 @router.get("/{employer_id}/settings")

@@ -51,6 +51,8 @@ POINTS = {
     "salary_in_upay": ("Your salary is paid into upay.", "আপনার বেতন upay-তে আসে।"),
     "employer_late": ("Your employer's salary payments have been late recently, so the limit is smaller for now.", "আপনার প্রতিষ্ঠানের বেতন সম্প্রতি দেরিতে এসেছে, তাই আপাতত সীমা কিছুটা কম।"),
     "new_joiner": ("You joined recently; the limit grows as your time with your employer grows.", "আপনি সম্প্রতি যোগ দিয়েছেন; চাকরির সময় বাড়লে সীমাও বাড়বে।"),
+    "dependency": ("You have used advances in most recent months, so this month's limit is smaller. Setting aside a little each payday can help you need them less.", "সাম্প্রতিক বেশিরভাগ মাসে আপনি আগাম নিয়েছেন, তাই এ মাসের সীমা কম। প্রতি বেতনে অল্প করে জমালে আগামের দরকার কমবে।"),
+    "attendance": ("Your limit follows the days your employer has recorded as worked this month.", "এ মাসে নিয়োগকর্তা যত দিন কাজ হিসেবে লিখেছেন, আপনার সীমা সেই অনুযায়ী।"),
     "carry_over": ("Part of an earlier advance is still being repaid, so this month's limit is smaller.", "আগের একটি আগামের কিছু অংশ এখনো ফেরত দেওয়া বাকি, তাই এ মাসের সীমা কম।"),
     "review": ("A team member will look at your request, usually the same day.", "আমাদের একজন সদস্য আপনার অনুরোধটি দেখবেন, সাধারণত একই দিনে।"),
     "cooling_off": (
@@ -125,6 +127,10 @@ def facts_for(decision: dict, policy: PolicyParams) -> dict:
             points.append("reduced")
         if "CARRY_OVER_REDUCTION" in codes:
             points.append("carry_over")
+        if "DEPENDENCY_NUDGE" in codes:
+            points.append("dependency")
+        if "ATTENDANCE_ADJUSTED" in codes and "EARNED_DAYS_LIMIT" in codes:
+            points.append("attendance")
         if risk_limited and raises & EMPLOYER_LATE:
             points.append("employer_late")
         elif risk_limited and "SHORT_TENURE" in raises:

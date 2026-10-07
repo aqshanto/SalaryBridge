@@ -26,6 +26,9 @@ The default column is checked against `backend/app/config.py` by a test, so this
 | `attrition_downgrade_threshold` | 0.3 | [ASSUMPTION] | If the predicted chance of leaving before payday is ≥ 30%, drop one tier. |
 | `cooling_off_consecutive_months` | 3 | [ASSUMPTION] | Three advances in a row signals possible dependence. |
 | `cooling_off_months` | 1 | [ASSUMPTION] | Then pause for one month, with a supportive message. |
+| `dependency_lookback_months` | 6 | [ASSUMPTION] | Window for the dependency guard (Phase 2). |
+| `dependency_months_threshold` | 4 | [ASSUMPTION] | Advances in 4 of the last 6 months (not necessarily in a row) signal habitual use. |
+| `dependency_limit_reduction_pct` | 50.0 | [ASSUMPTION] | Then the limit is halved and a savings nudge is shown; the guard never declines on its own. |
 | `large_amount_threshold_bdt` | 10000 | [ASSUMPTION] | Requests at or above this go to the human approval queue. |
 | `abuse_flag_top_pct` | 2.0 | [ASSUMPTION] | The most unusual 2% of borrowing patterns (by M5 anomaly score in training data) go to a person before any offer. |
 | `fairness_gap_threshold_pp` | 5.0 | [ASSUMPTION] | Approval-rate gap between audited groups (percentage points) that requires an explanation. |

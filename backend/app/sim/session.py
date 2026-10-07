@@ -20,6 +20,7 @@ from app.sim import settlement
 from app.sim.tables import (  # noqa: F401  (re-exported for services and tests)
     metadata,
     sim_advances,
+    sim_attendance,
     sim_closed_employers,
     sim_decisions,
     sim_employer_settings,
@@ -171,6 +172,17 @@ class SimSession:
             conn.execute(delete(sim_employer_settings).where(sim_employer_settings.c.employer_id == employer_id))
             conn.execute(insert(sim_employer_settings).values(employer_id=employer_id, opted_in=opted_in, cap_pct=cap_pct))
         return self.employer_settings(employer_id)
+
+    def record_attendance(self, employee_id: str, work_month: str, unpaid_absent_days: int) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(delete(sim_attendance).where(sim_attendance.c.employee_id == employee_id, sim_attendance.c.work_month == work_month))
+            conn.execute(insert(sim_attendance).values(employee_id=employee_id, work_month=work_month, unpaid_absent_days=unpaid_absent_days, received_on=self.sim_date))
+
+    def unpaid_absence_days(self, employee_id: str, work_month: str) -> int | None:
+        with self.engine.connect() as conn:
+            return conn.execute(
+                select(sim_attendance.c.unpaid_absent_days).where(sim_attendance.c.employee_id == employee_id, sim_attendance.c.work_month == work_month)
+            ).scalar_one_or_none()
 
     def ack_notice(self, employer_id: str, payday: date, total_bdt: int) -> None:
         with self.engine.begin() as conn:

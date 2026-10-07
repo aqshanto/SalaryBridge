@@ -97,6 +97,15 @@ def consecutive_months_before(as_of: date, months_with_advance: frozenset[str]) 
         count += 1
 
 
+def months_with_advance_in_window(as_of: date, months_with_advance: frozenset[str], lookback: int) -> int:
+    """How many of the `lookback` months before this one had an advance (gaps allowed)."""
+    count, year, month = 0, as_of.year, as_of.month
+    for _ in range(lookback):
+        year, month = (year - 1, 12) if month == 1 else (year, month - 1)
+        count += f"{year}-{month:02d}" in months_with_advance
+    return count
+
+
 def evaluate(
     employer: EmployerContext,
     employee: EmployeeContext,
@@ -156,6 +165,29 @@ def evaluate(
                 True,
                 f"Limit reduced by {policy.carry_over_limit_reduction_pct:g}% because an earlier advance carried over",
                 {"reduction_pct": policy.carry_over_limit_reduction_pct},
+            )
+        )
+    # Dependency guard (Phase 2): habitual use with gaps escapes the consecutive-month cooling-off,
+    # so frequent users get a smaller limit and a savings nudge instead of being encouraged to borrow every month.
+    used_months = months_with_advance_in_window(as_of, history.months_with_advance, policy.dependency_lookback_months)
+    if used_months >= policy.dependency_months_threshold:
+        salary_cap = salary_cap * (100 - Decimal(str(policy.dependency_limit_reduction_pct))) / 100
+        trace.append(
+            TraceItem(
+                "DEPENDENCY_NUDGE",
+                True,
+                f"Advances in {used_months} of the last {policy.dependency_lookback_months} months: limit reduced by "
+                f"{policy.dependency_limit_reduction_pct:g}% and a savings plan is suggested",
+                {"months_used": used_months, "lookback_months": policy.dependency_lookback_months, "reduction_pct": policy.dependency_limit_reduction_pct},
+            )
+        )
+    if request.earned_days is not None:
+        trace.append(
+            TraceItem(
+                "ATTENDANCE_ADJUSTED",
+                True,
+                f"Earned days come from the employer's attendance feed: {earned_days} of {as_of.day} days so far",
+                {"earned_days": earned_days, "calendar_days": as_of.day},
             )
         )
     # Amount + fee must fit inside earned wages so the payday deduction never exceeds them.
