@@ -51,6 +51,19 @@ ML tiers: A 5,045 · B 1,162 · C 664 · D 689 (to a person: 689).
 | carry_over | 0.26% |
 | write_off | 0.95% |
 
+### Pricing scenarios (per sandbox month; 454.0 advances, 1,755 salaries paid through upay; prices are assumptions)
+
+| Scenario | Worker pays (avg) | Employer co-pay | Payroll fee (PEPM) | Revenue | Costs | Net / month | Viable |
+|---|---|---|---|---|---|---|---|
+| current_flat_25 | ৳25 | ৳0 | ৳0 | ৳11,350 | ৳21,394 | ৳-10,044 | no |
+| worker_pays_break_even | ৳48 | ৳0 | ৳0 | ৳21,792 | ৳21,394 | ৳398 | yes |
+| tiered_worker_fee | ৳24.67 | ৳0 | ৳0 | ৳11,200 | ৳21,394 | ৳-10,194 | no |
+| employer_copay_25 | ৳25 | ৳25 | ৳0 | ৳22,700 | ৳21,394 | ৳1,306 | yes |
+| payroll_fee_10_pepm | ৳25 | ৳0 | ৳10 | ৳28,900 | ৳21,394 | ৳7,506 | yes |
+| recommended_mix (recommended) | ৳24.67 | ৳20 | ৳10 | ৳37,830 | ৳21,394 | ৳16,436 | yes |
+
+Break-even if the worker pays everything: ৳48. Prices are [ASSUMPTION]; uptake is assumed equal in every scenario; costs follow plan.md §10.
+
 ### Calibration
 
 | Model | n | Positive rate | PR-AUC | Brier |
@@ -128,6 +141,19 @@ ML tiers: A 3,340 · B 2,281 · C 2,932 · D 1,850 (to a person: 1,850).
 | wallet_debit | 0.54% |
 | carry_over | 0.27% |
 | write_off | 1.55% |
+
+### Pricing scenarios (per sandbox month; 555.1 advances, 1,013 salaries paid through upay; prices are assumptions)
+
+| Scenario | Worker pays (avg) | Employer co-pay | Payroll fee (PEPM) | Revenue | Costs | Net / month | Viable |
+|---|---|---|---|---|---|---|---|
+| current_flat_25 | ৳25 | ৳0 | ৳0 | ৳13,877 | ৳30,361 | ৳-16,485 | no |
+| worker_pays_break_even | ৳55 | ৳0 | ৳0 | ৳30,529 | ৳30,361 | ৳167 | yes |
+| tiered_worker_fee | ৳21.24 | ৳0 | ৳0 | ৳11,790 | ৳30,361 | ৳-18,571 | no |
+| employer_copay_25 | ৳25 | ৳25 | ৳0 | ৳27,753 | ৳30,361 | ৳-2,608 | no |
+| payroll_fee_10_pepm | ৳25 | ৳0 | ৳10 | ৳24,007 | ৳30,361 | ৳-6,355 | no |
+| recommended_mix (recommended) | ৳21.24 | ৳20 | ৳10 | ৳33,021 | ৳30,361 | ৳2,660 | yes |
+
+Break-even if the worker pays everything: ৳55. Prices are [ASSUMPTION]; uptake is assumed equal in every scenario; costs follow plan.md §10.
 
 ### Calibration
 

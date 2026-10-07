@@ -29,6 +29,7 @@ from app.ml import m2_repayment as m2
 from app.ml import m3_attrition as m3
 from app.ml.common import ARTIFACTS_DIR, TRAIN_SEEDS, binary_metrics
 from app.rules.tiers import tiered_amount
+from app.services.pricing import band_of, scenario_table
 from data.generator import PROFILES, generate
 
 REPORT = BACKEND_DIR.parent / "docs" / "validation_report.md"
@@ -83,6 +84,10 @@ def _world(profile: str, seed: int, m1_model, policy) -> tuple[pd.DataFrame, pd.
     adv = tables["advances"].set_index("advance_id")
     days_out = (pd.to_datetime(adv["settled_date"]) - pd.to_datetime(adv["issue_date"])).dt.days
     test["days_out"] = test["advance_id"].map(days_out).astype(float)
+    # Salaries this world's employers could disburse through upay at the start of the test window (for the payroll-linked fee).
+    emp = tables["employees"]
+    active = (pd.to_datetime(emp["hire_date"]) <= test_start) & (emp["end_date"].isna() | (pd.to_datetime(emp["end_date"]) >= test_start))
+    test["world_upay_payroll"] = int((active & emp["salary_to_upay"].astype(bool)).sum())
     return test, req, reps
 
 
@@ -152,6 +157,8 @@ def _economics_base(test: pd.DataFrame, world_months: int) -> dict:
         "loss_flat_bdt": int(test["loss_amount"].sum()),
         "avg_days_outstanding": round(float(approved["days_out"].mean()), 2),
         "mean_monthly_funds_ml_bdt": int(approved["ml_offered"].sum() / world_months),
+        "advances_by_band": {k: int(v) for k, v in approved["ml_offered"].map(band_of).value_counts().items()},
+        "upay_payroll_employees": int(round(test.groupby("world")["world_upay_payroll"].first().mean())),
     }
 
 
@@ -212,7 +219,8 @@ def evaluate_profile(profile: str, seeds, m1_model, policy) -> dict:
     return {
         "worlds": [f"{profile}{s}" for s in seeds],
         "policies": _policy_table(test),
-        "economics_base": _economics_base(test, world_months=len(seeds) * PROFILES[profile].test_months),
+        "economics_base": (econ := _economics_base(test, world_months=len(seeds) * PROFILES[profile].test_months)),
+        "pricing": scenario_table(econ, policy),
         "recovery_share_by_step_flat_cap": _recovery(rep, test),
         "fairness": _fairness(test, req, policy.fairness_gap_threshold_pp),
         "calibration": _calibration(test),
@@ -307,6 +315,21 @@ def render(result: dict) -> str:
         lines += ["", "### Recovery by waterfall step (flat cap, share of money due)", "", "| Step | Share |", "|---|---|"]
         for s, v in r["recovery_share_by_step_flat_cap"].items():
             lines.append(f"| {s} | {_fmt(v)} |")
+        pr = r["pricing"]
+        lines += [
+            "",
+            f"### Pricing scenarios (per sandbox month; {pr['advances_per_month']:,} advances, {pr['upay_payroll_employees']:,} salaries paid through upay; prices are assumptions)",
+            "",
+            "| Scenario | Worker pays (avg) | Employer co-pay | Payroll fee (PEPM) | Revenue | Costs | Net / month | Viable |",
+            "|---|---|---|---|---|---|---|---|",
+        ]
+        for sc in pr["scenarios"]:
+            mark = " (recommended)" if sc["recommended"] else ""
+            lines.append(
+                f"| {sc['key']}{mark} | ৳{sc['avg_worker_fee_bdt']:g} | ৳{sc['employer_copay_bdt']:g} | ৳{sc['payroll_fee_pepm_bdt']:g} | "
+                f"৳{sc['revenue']['total']:,} | ৳{sc['costs']['total']:,} | ৳{sc['net_bdt_per_month']:,} | {'yes' if sc['viable'] else 'no'} |"
+            )
+        lines += ["", f"Break-even if the worker pays everything: ৳{pr['break_even_worker_fee_bdt']}. {pr['assumptions']}"]
         lines += ["", "### Calibration", "", "| Model | n | Positive rate | PR-AUC | Brier |", "|---|---|---|---|---|"]
         for label, m in r["calibration"].items():
             lines.append(f"| {label} | {m['n']:,} | {_fmt(m['positive_rate'])} | {m['pr_auc']} | {m['brier']} |")

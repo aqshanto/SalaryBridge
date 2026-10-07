@@ -260,10 +260,27 @@ export type ProfileResult = {
     loss_ml_bdt: number;
     avg_days_outstanding: number;
     mean_monthly_funds_ml_bdt: number;
+    advances_by_band: Record<string, number>;
+    upay_payroll_employees: number;
   };
+  pricing: Pricing;
   fairness: Record<string, FairnessDim>;
   calibration: Record<string, BinaryMetrics>;
 };
+export type PricingScenario = {
+  key: string;
+  worker_fee: Record<string, number>;
+  employer_copay_bdt: number;
+  payroll_fee_pepm_bdt: number;
+  recommended: boolean;
+  avg_worker_fee_bdt: number;
+  revenue: { worker: number; employer_copay: number; payroll_fee: number; total: number };
+  costs: { total: number };
+  net_bdt_per_month: number;
+  viable: boolean;
+  copay_needed_to_break_even_bdt: number;
+};
+export type Pricing = { advances_per_month: number; upay_payroll_employees: number; break_even_worker_fee_bdt: number; scenarios: PricingScenario[] };
 export type M4Split = { world: { model: { coverage_p10_p90: number }; pool_covers_actual_share: number } };
 export type ValidationData = {
   generated_on: string;
