@@ -82,6 +82,10 @@ export type ScenarioResult = {
 
 export type Persona = { key: string; name: string; story: string; employee_id: string; employer_id: string; industry: string; salary_bdt: number; hire_date: string };
 
+export type StaffMember = { employee_id: string; name: string | null; salary_bdt: number; hire_date: string; active: boolean };
+export type EmployerOption = { employer_id: string; name: string; industry: string; persona: string | null };
+export type RequestRow = { decision_id: string; date: string; employee_id: string; name: string | null; employer_id: string | null; requested_bdt: number; approved_bdt: number; status: string };
+
 export type Reason = { code: string; source: string; direction: string; detail: string };
 
 export type Explanation = { en: string; bn: string; source: "template" | "llm"; fallback_reason?: string | null; points?: string[] };

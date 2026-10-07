@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { CapitalChart } from "@/components/ops/CapitalChart";
 import { useSim } from "@/components/SimProvider";
-import { api, post, type CapitalForecast, type EmployerRisk, type Monitor, type OpsKpis, type QueueItem } from "@/lib/api";
+import { api, post, type CapitalForecast, type EmployerRisk, type Monitor, type OpsKpis, type QueueItem, type RequestRow } from "@/lib/api";
 import { money, pct, reasonLabel, toBn } from "@/lib/i18n";
 
 type OpsData = { kpis: OpsKpis; forecast: CapitalForecast; queue: QueueItem[]; employers: EmployerRisk[]; monitor: Monitor };
@@ -103,6 +103,56 @@ function RiskBar({ value }: { value: number }) {
   );
 }
 
+function RequestsCard() {
+  const { t, lang, sessionId, version } = useSim();
+  const [rows, setRows] = useState<RequestRow[]>([]);
+  const [filter, setFilter] = useState("");
+  useEffect(() => {
+    if (!sessionId) return;
+    api<RequestRow[]>("/ops/requests", sessionId).then(setRows).catch(() => setRows([]));
+  }, [sessionId, version]);
+  const q = filter.trim().toLowerCase();
+  const shown = q ? rows.filter((r) => r.employee_id.toLowerCase().includes(q) || (r.name ?? "").toLowerCase().includes(q)) : rows;
+  return (
+    <Card title={`${t.ops.requestsTitle} (${lang === "bn" ? toBn(rows.length) : rows.length})`}>
+      <p className="mb-2 text-sm text-muted">{t.ops.requestsNote}</p>
+      <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t.ops.requestsFilter} className="mb-3 w-full rounded-md border border-line bg-panel px-2 py-1.5 text-sm sm:w-72" />
+      {shown.length === 0 ? (
+        <p className="text-sm text-muted">{t.ops.requestsEmpty}</p>
+      ) : (
+        <div className="max-h-96 overflow-auto">
+          <table className="w-full text-sm" data-testid="requests-table">
+            <thead className="sticky top-0 bg-panel">
+              <tr className="border-b border-line text-left text-muted">
+                <th className="py-1 pr-3 font-medium">{t.ops.colDate}</th>
+                <th className="py-1 pr-3 font-medium">{t.ops.colEmployee}</th>
+                <th className="py-1 pr-3 font-medium">{t.ops.colEmployer}</th>
+                <th className="py-1 pr-3 text-right font-medium">{t.ops.colRequested}</th>
+                <th className="py-1 pr-3 text-right font-medium">{t.ops.colApproved}</th>
+                <th className="py-1 pr-3 font-medium">{t.ops.colStatus}</th>
+                <th className="py-1" />
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((r) => (
+                <tr key={r.decision_id} className="border-b border-line">
+                  <td className="py-1.5 pr-3 tabular-nums">{r.date}</td>
+                  <td className="py-1.5 pr-3">{r.name ? <span className="font-medium">{r.name} </span> : null}<span className="font-mono text-xs text-muted">{r.employee_id}</span></td>
+                  <td className="py-1.5 pr-3 font-mono text-xs">{r.employer_id ?? "—"}</td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums">{money(r.requested_bdt, lang)}</td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums">{money(r.approved_bdt, lang)}</td>
+                  <td className="py-1.5 pr-3"><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${r.status === "declined" ? "bg-bad-soft text-bad" : r.status === "queued" ? "bg-warn-soft text-warn" : "bg-good-soft text-good"}`}>{r.status}</span></td>
+                  <td className="py-1.5 text-right"><a href={`/employee?employee=${encodeURIComponent(r.employee_id)}`} className="text-accent hover:underline">{t.ops.open}</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function OpsView() {
   const { t, lang, sessionId, version, refresh, state } = useSim();
   const [data, setData] = useState<OpsData | null>(null);
@@ -174,6 +224,8 @@ export function OpsView() {
       <Card title={t.ops.forecastTitle}>
         <CapitalChart forecast={forecast} />
       </Card>
+
+      <RequestsCard />
 
       <Card title={`${t.ops.queueTitle} (${num(queue.length)})`}>
         {queue.length === 0 ? (

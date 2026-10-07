@@ -58,7 +58,9 @@ def _notice(session: SimSession, employer_id: str) -> dict:
 def employers(session: SimSession = Depends(get_session)) -> list[dict]:
     """Employers HR can sign in as in the demo (persona employers first)."""
     start = session.world.first_live_month.replace(day=session.settings.sim_start_day)
-    persona_of = {p.employer_id: p.name for p in personas_for(get_settings().database_url, start)}
+    persona_of: dict[str, str] = {}
+    for p in personas_for(get_settings().database_url, start):
+        persona_of[p.employer_id] = f"{persona_of[p.employer_id]} & {p.name}" if p.employer_id in persona_of else p.name
     closed = session.closed_employers()
     rows = [
         {
@@ -73,6 +75,19 @@ def employers(session: SimSession = Depends(get_session)) -> list[dict]:
         for eid, e in session.world.employers.iterrows()
     ]
     return sorted(rows, key=lambda r: (r["persona"] is None, r["employer_id"]))
+
+
+@router.get("/{employer_id}/staff")
+def staff(employer_id: str, session: SimSession = Depends(get_session)) -> list[dict]:
+    """Staff list for picking any employee in the demo (no risk information, like every HR response)."""
+    _check(session, employer_id)
+    names = _names(session)
+    people = session.world.employees[session.world.employees["employer_id"] == employer_id]
+    rows = [
+        {"employee_id": eid, "name": names.get(eid), "salary_bdt": int(e["salary_bdt"]), "hire_date": str(e["hire_date"])[:10], "active": session.resignation(eid) is None}
+        for eid, e in people.iterrows()
+    ]
+    return sorted(rows, key=lambda r: (r["name"] is None, r["employee_id"]))
 
 
 @router.get("/{employer_id}/dashboard")

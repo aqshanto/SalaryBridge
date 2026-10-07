@@ -49,3 +49,15 @@ def test_borrowing_monitor_flags_about_the_configured_share(client):
     scores = [t["anomaly_score"] for t in m["top"]]
     assert scores == sorted(scores, reverse=True)
     assert not {"gender", "region", "behaviour"} & set(m["top"][0])
+
+
+def test_requests_log_lists_every_decision_and_filters_by_employee(full_client):
+    h = {"X-Session-Id": "requests-test-0001"}
+    full_client.post("/sim/reset", headers=h)
+    people = full_client.get("/personas", headers=h).json()
+    for p in people:
+        full_client.post("/advance/offer", json={"employee_id": p["employee_id"], "amount_bdt": 1_000}, headers=h)
+    rows = full_client.get("/ops/requests", headers=h).json()
+    assert len(rows) == 3 and {r["name"] for r in rows} == {"Rahim", "Shapla", "Karim"}
+    one = full_client.get(f"/ops/requests?employee_id={people[0]['employee_id']}", headers=h).json()
+    assert len(one) == 1 and one[0]["employee_id"] == people[0]["employee_id"]

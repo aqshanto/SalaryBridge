@@ -95,3 +95,34 @@ def borrowing_monitor(session: SimSession) -> dict:
             for r in top.itertuples()
         ],
     }
+
+
+def requests(session: SimSession, employee_id: str | None = None, limit: int = 200) -> list[dict]:
+    """Decision log for the ops 'all requests' table."""
+    from app.sim.personas import personas_for
+    from app.config import get_settings
+
+    query = select(sim_decisions).order_by(sim_decisions.c.sim_date.desc(), sim_decisions.c.decision_id.desc()).limit(limit)
+    if employee_id:
+        query = query.where(sim_decisions.c.employee_id == employee_id)
+    with session.engine.connect() as conn:
+        rows = conn.execute(query).all()
+    start = session.world.first_live_month.replace(day=session.settings.sim_start_day)
+    names = {p.employee_id: p.name for p in personas_for(get_settings().database_url, start)}
+    staff = session.world.employees
+    out = []
+    for r in rows:
+        employer_id = staff.at[r.employee_id, "employer_id"] if r.employee_id in staff.index else None
+        out.append(
+            {
+                "decision_id": r.decision_id,
+                "date": r.sim_date.isoformat(),
+                "employee_id": r.employee_id,
+                "name": names.get(r.employee_id),
+                "employer_id": employer_id,
+                "requested_bdt": int(r.requested_bdt),
+                "approved_bdt": int(r.approved_bdt),
+                "status": r.status,
+            }
+        )
+    return out
