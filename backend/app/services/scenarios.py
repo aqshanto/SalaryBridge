@@ -60,7 +60,10 @@ def _take(session: SimSession, employee_id: str, amount: int) -> dict:
     d = decide(session, employee_id, amount, session.settings.policy)
     if d.status != "offered":
         raise ScenarioError(f"Setup needed an automatic offer for {employee_id} but got '{d.status}'")
-    return advances.accept(session, d.decision_id)
+    accepted = advances.accept(session, d.decision_id)
+    if accepted.get("status") == "awaiting_employer":  # the scenario's setup includes HR's confirmation
+        accepted = advances.employer_decide(session, d.employer_id, d.decision_id, True)
+    return accepted
 
 
 def _work_month(session: SimSession) -> str:

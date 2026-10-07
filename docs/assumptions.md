@@ -26,6 +26,8 @@ The default column is checked against `backend/app/config.py` by a test, so this
 | `attrition_downgrade_threshold` | 0.3 | [ASSUMPTION] | If the predicted chance of leaving before payday is ≥ 30%, drop one tier. |
 | `cooling_off_consecutive_months` | 3 | [ASSUMPTION] | Three advances in a row signals possible dependence. |
 | `cooling_off_months` | 1 | [ASSUMPTION] | Then pause for one month, with a supportive message. |
+| `advance_window_start_day` | 20 | [ASSUMPTION] | Advances open on day 20 of each month; by then most of the month is earned, so the full 20% cap is available. |
+| `employer_confirmation_required` | 1 | [ASSUMPTION] | 1 = after the employee accepts, HR must confirm before upay pays out (0 = pay on accept). |
 | `dependency_lookback_months` | 6 | [ASSUMPTION] | Window for the dependency guard (Phase 2). |
 | `dependency_months_threshold` | 4 | [ASSUMPTION] | Advances in 4 of the last 6 months (not necessarily in a row) signal habitual use. |
 | `dependency_limit_reduction_pct` | 50.0 | [ASSUMPTION] | Then the limit is halved and a savings nudge is shown; the guard never declines on its own. |

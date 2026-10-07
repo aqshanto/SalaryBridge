@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,6 +10,10 @@ from app.sim.world import load_world
 from data.seed import write_seed_db
 
 CACHES = (get_settings, load_world, personas_for)
+
+# Existing tests exercise the day-20 window and HR confirmation off; dedicated tests switch them on.
+os.environ.setdefault("POLICY__ADVANCE_WINDOW_START_DAY", "1")
+os.environ.setdefault("POLICY__EMPLOYER_CONFIRMATION_REQUIRED", "false")
 
 
 @pytest.fixture(scope="session")

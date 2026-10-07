@@ -146,3 +146,26 @@ def test_kill_switch_blocks_new_money_but_keeps_existing_advances(client, people
     client.post("/ops/kill-switch", json={"on": False}, headers=H)
     fresh = offer(client, people["shapla"], 1_000)
     assert fresh["status"] == "offered" and accept(client, fresh["decision_id"]).status_code == 200
+
+
+def test_hr_must_confirm_before_money_moves(full_client, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setenv("POLICY__EMPLOYER_CONFIRMATION_REQUIRED", "true")
+    get_settings.cache_clear()
+    try:
+        h = {"X-Session-Id": "hr-confirm-0001"}
+        full_client.post("/sim/reset", headers=h)
+        rahim = next(p for p in full_client.get("/personas", headers=h).json() if p["key"] == "rahim")
+        d = full_client.post("/advance/offer", json={"employee_id": rahim["employee_id"], "amount_bdt": 2_000}, headers=h).json()
+        pool_before = float(full_client.get("/sim/state", headers=h).json()["pool_bdt"])
+        acc = full_client.post("/advance/accept", json={"decision_id": d["decision_id"]}, headers=h).json()
+        assert acc["status"] == "awaiting_employer"
+        assert float(full_client.get("/sim/state", headers=h).json()["pool_bdt"]) == pool_before  # nothing paid yet
+        pending = full_client.get(f"/employer/{rahim['employer_id']}/pending", headers=h).json()
+        assert [p["decision_id"] for p in pending] == [d["decision_id"]] and "prob" not in str(pending)
+        paid = full_client.post(f"/employer/{rahim['employer_id']}/pending/{d['decision_id']}/confirm", headers=h).json()
+        assert paid["status"] == "paid" and paid["amount_bdt"] == d["approved_amount_bdt"]
+        assert float(full_client.get("/sim/state", headers=h).json()["pool_bdt"]) == pool_before - d["approved_amount_bdt"]
+        assert full_client.get("/sim/state", headers=h).json()["advance_flow"]["paid_out_bdt"] == d["approved_amount_bdt"]
+    finally:
+        get_settings.cache_clear()

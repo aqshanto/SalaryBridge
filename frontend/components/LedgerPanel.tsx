@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useSim } from "@/components/SimProvider";
-import type { LedgerBalances, SimEvent } from "@/lib/api";
+import type { SimEvent } from "@/lib/api";
 import { money, shortDate } from "@/lib/i18n";
 
-type Row = { key: keyof LedgerBalances; label: string; value: number; tone?: "good" | "bad" };
+type Row = { key: string; label: string; value: number; tone?: "good" | "bad" };
 
 function Amount({ value, lang }: { value: number; lang: "en" | "bn" }) {
   const [flash, setFlash] = useState(false);
@@ -44,14 +44,17 @@ export function LedgerPanel() {
   const { t, lang, state, events } = useSim();
   const b = state?.ledger?.balances_bdt;
   if (!state || !b) return null; // e.g. a response from an older API version
+  // Loan money only: wages that employers pay through upay are kept out of this panel.
+  const f = state.advance_flow ?? { paid_out_bdt: 0, recovered_payroll_bdt: 0, recovered_wallet_bdt: 0, outstanding_bdt: 0, fees_bdt: b.fees_income, written_off_bdt: b.loss_provision };
   const rows: Row[] = [
-    { key: "upay_capital", label: t.ledger.capital, value: -b.upay_capital },
-    { key: "upay_pool", label: t.ledger.pool, value: b.upay_pool },
-    { key: "employee_wallets", label: t.ledger.wallets, value: b.employee_wallets },
-    { key: "external_spend", label: t.ledger.spent, value: b.external_spend },
-    { key: "employers", label: t.ledger.employers, value: -b.employers },
-    { key: "fees_income", label: t.ledger.fees, value: b.fees_income, tone: "good" },
-    { key: "loss_provision", label: t.ledger.losses, value: b.loss_provision, tone: "bad" },
+    { key: "capital", label: t.ledger.capital, value: -b.upay_capital },
+    { key: "pool", label: t.ledger.pool, value: b.upay_pool },
+    { key: "paid_out", label: t.ledger.paidOut, value: f.paid_out_bdt },
+    { key: "recovered_payroll", label: t.ledger.recoveredPayroll, value: f.recovered_payroll_bdt },
+    { key: "recovered_wallet", label: t.ledger.recoveredWallet, value: f.recovered_wallet_bdt },
+    { key: "outstanding", label: t.ledger.outstanding, value: f.outstanding_bdt },
+    { key: "fees", label: t.ledger.fees, value: f.fees_bdt, tone: "good" },
+    { key: "losses", label: t.ledger.losses, value: f.written_off_bdt, tone: "bad" },
   ];
   // Payroll noise (every employer's payday) is summarised; advance-related events are listed.
   const shown = events.filter((e) => e.type !== "payroll_scheduled" && e.type !== "payroll_paid").slice(0, 8);
@@ -70,8 +73,8 @@ export function LedgerPanel() {
         </div>
         <div className="mb-3 flex items-center gap-1 text-xs text-muted" aria-hidden>
           <span className="rounded bg-accent-soft px-1.5 py-0.5">{t.ledger.pool}</span>→
-          <span className="rounded bg-accent-soft px-1.5 py-0.5">{t.ledger.wallets}</span>→
-          <span className="rounded bg-accent-soft px-1.5 py-0.5">{t.ledger.spent}</span>
+          <span className="rounded bg-accent-soft px-1.5 py-0.5">{t.ledger.flowEmployee}</span>→
+          <span className="rounded bg-accent-soft px-1.5 py-0.5">{t.ledger.flowRepaid}</span>
         </div>
         <dl className="space-y-1.5 text-sm">
           {rows.map((r) => (
@@ -83,7 +86,6 @@ export function LedgerPanel() {
             </div>
           ))}
         </dl>
-        {b.employers !== 0 && <p className="mt-3 text-xs text-muted">{t.ledger.payrollNote}</p>}
         <div className="mt-3 text-xs text-muted">{t.ledger.entries(state.ledger.entries)}</div>
       </div>
       <div className="rounded-lg border border-line bg-panel p-4">

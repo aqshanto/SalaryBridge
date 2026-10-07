@@ -450,6 +450,7 @@ class SimSession:
             "kill_switch": self.kill_switch,
             "pool_bdt": paisa_to_bdt(self.ledger.balance("upay_pool")),
             "advances": settlement.summary(self),
+            "advance_flow": settlement.advance_flow(self),
             "ledger": {"reconciled": recon.ok, "entries": recon.entries, "total_paisa": recon.total_paisa, "balances_bdt": self.ledger_balances()},
             "recent_payroll_runs": [
                 {

@@ -113,3 +113,12 @@ Loss rate of approved advances when the same share is declined by each ranking (
 | Authentication and role-based access (today: sandbox session header only) | **Next step** | upay SSO/OAuth with roles employee / HR / ops |
 | Rate limiting, penetration test, access-control review | **Next step** | Before any real money moves |
 | Regulatory review (Bangladesh Bank digital credit / MFS rules), model governance and drift monitoring | **Next step** | Model cards exist in `metrics.json`; drift alerts via `/metrics` |
+
+## 10. Late Phase 2 product changes
+
+| Change | Where |
+|---|---|
+| Advances open on **day 20** of each month (`advance_window_start_day`); from then the full 20% cap is available. Earlier requests get a clear "opens on day 20" reason | `app/rules/eligibility.py` (`TOO_EARLY_IN_MONTH`), `tests/test_rules.py::test_advances_open_on_day_20` |
+| **HR confirms before money moves** (`employer_confirmation_required`): the employee accepts, HR sees it under "Advances waiting for your confirmation", upay pays out only after Confirm | `app/services/advances.py`, `GET/POST /employer/{id}/pending`, `tests/test_advances.py::test_hr_must_confirm_before_money_moves` |
+| Money-flow panel shows **loan money only** (paid out, recovered by payday deduction / wallet, still owed, fees, written off); wages are kept out | `settlement.advance_flow`, `frontend/components/LedgerPanel.tsx` |
+| All requests in one place (Ops), pick any employee (Employee page), each demo person at a different employer | `GET /ops/requests`, `GET /employer/{id}/staff` |

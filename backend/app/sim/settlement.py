@@ -252,3 +252,20 @@ def summary(session: "SimSession") -> dict:
         "fees_income_bdt": session.ledger.balance("fees_income") // 100,
         "loss_provision_bdt": session.ledger.balance("loss_provision") // 100,
     }
+
+
+def advance_flow(session: "SimSession") -> dict:
+    """Advance money only (no wages): paid out, recovered by step, still owed, fees and losses."""
+    with session.engine.connect() as conn:
+        paid_out = conn.execute(select(func.coalesce(func.sum(sim_advances.c.amount), 0))).scalar_one()
+        by_step = dict(conn.execute(select(sim_repayments.c.step, func.sum(sim_repayments.c.amount)).group_by(sim_repayments.c.step)).all())
+        open_rows = conn.execute(select(sim_advances).where(sim_advances.c.status.in_(("open", "carried_over", "pending_write_off")))).all()
+        outstanding = sum(remaining(conn, a) for a in open_rows)
+    return {
+        "paid_out_bdt": int(paid_out),
+        "recovered_payroll_bdt": int(by_step.get("employer_remittance", 0) + by_step.get("carry_over", 0)),
+        "recovered_wallet_bdt": int(by_step.get("wallet_debit", 0)),
+        "outstanding_bdt": int(outstanding),
+        "fees_bdt": session.ledger.balance("fees_income") // 100,
+        "written_off_bdt": session.ledger.balance("loss_provision") // 100,
+    }

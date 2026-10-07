@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useSim } from "@/components/SimProvider";
-import { api, download, post, type EmployerDashboard, type EmployerRow } from "@/lib/api";
+import { api, download, post, type EmployerDashboard, type EmployerRow, type PendingAdvance } from "@/lib/api";
 import { longDate, money, shortDate, toBn } from "@/lib/i18n";
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -70,7 +70,7 @@ function Settings({ dash, onSaved }: { dash: EmployerDashboard; onSaved: () => v
 }
 
 export function EmployerView() {
-  const { t, lang, sessionId, version } = useSim();
+  const { t, lang, sessionId, version, refresh } = useSim();
   const [employers, setEmployers] = useState<EmployerRow[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [dash, setDash] = useState<EmployerDashboard | null>(null);
@@ -96,6 +96,22 @@ export function EmployerView() {
       .then((d) => mine === seq.current && setDash(d))
       .catch((e) => mine === seq.current && setError(String(e.message ?? e)));
   }, [sessionId, selected, version, reload]);
+
+  const [pending, setPending] = useState<PendingAdvance[]>([]);
+  useEffect(() => {
+    if (!sessionId || !selected) return;
+    api<PendingAdvance[]>(`/employer/${selected}/pending`, sessionId).then(setPending).catch(() => setPending([]));
+  }, [sessionId, selected, version, reload]);
+
+  const decidePending = async (decisionId: string, action: "confirm" | "decline") => {
+    try {
+      await post(`/employer/${selected}/pending/${decisionId}/${action}`, sessionId);
+      setReload((r) => r + 1);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
 
   const current = dash && dash.employer_id === selected ? dash : null;
   const notice = current?.notice;
@@ -132,6 +148,29 @@ export function EmployerView() {
       {current && (
         <>
           {current.status === "closed" && <div className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">{t.employer.closed}</div>}
+
+          <Card>
+            <h2 className="font-semibold">{t.employer.pendingTitle} ({num(pending.length)})</h2>
+            <p className="mb-3 mt-1 text-sm text-muted">{t.employer.pendingNote}</p>
+            {pending.length === 0 ? (
+              <p className="text-sm text-muted">{t.employer.pendingEmpty}</p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {pending.map((p) => (
+                  <li key={p.decision_id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                    <div>
+                      <div className="font-medium">{p.name} <span className="font-mono text-xs text-muted">{p.employee_id}</span></div>
+                      <div className="text-muted">{money(p.amount_bdt, lang)} + {money(p.fee_bdt, lang)} · {longDate(p.repayment_date, lang)}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => decidePending(p.decision_id, "confirm")} className="rounded-md bg-accent px-3 py-1.5 font-medium text-white hover:opacity-90">{t.employer.confirmAdvance}</button>
+                      <button type="button" onClick={() => decidePending(p.decision_id, "decline")} className="rounded-md border border-line px-3 py-1.5 hover:bg-bad-soft">{t.employer.declineAdvance}</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
 
           <div className="grid gap-3 sm:grid-cols-3">
             <Kpi label={t.employer.people} value={num(current.employees_with_deductions)} />
