@@ -34,6 +34,8 @@ def flat(fee: float) -> dict:
 
 
 TIERED = {"upto_2000": 15, "upto_5000": 25, "above_5000": 40}
+# Worker-only slab sized to break even in Profile A without employer money (shows why fees alone are not enough).
+WORKER_ONLY_SLAB = {"upto_2000": 30, "upto_5000": 50, "above_5000": 70}
 
 SCENARIOS = (
     Scenario("current_flat_25", flat(25)),
@@ -41,6 +43,7 @@ SCENARIOS = (
     Scenario("tiered_worker_fee", TIERED),
     Scenario("employer_copay_25", flat(25), employer_copay_bdt=25),
     Scenario("payroll_fee_10_pepm", flat(25), payroll_fee_pepm_bdt=10),
+    Scenario("worker_only_slab", WORKER_ONLY_SLAB),
     Scenario("recommended_mix", TIERED, employer_copay_bdt=20, payroll_fee_pepm_bdt=10, recommended=True),
 )
 

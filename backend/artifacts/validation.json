@@ -214,6 +214,34 @@
           "copay_needed_to_break_even_bdt": 0
         },
         {
+          "key": "worker_only_slab",
+          "worker_fee": {
+            "upto_2000": 30,
+            "upto_5000": 50,
+            "above_5000": 70
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 47.53,
+          "revenue": {
+            "worker": 21579,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 21579
+          },
+          "costs": {
+            "loss": 9588,
+            "capital": 7137,
+            "idle": 2399,
+            "ops": 2270,
+            "total": 21394
+          },
+          "net_bdt_per_month": 185,
+          "viable": true,
+          "copay_needed_to_break_even_bdt": 0
+        },
+        {
           "key": "recommended_mix",
           "worker_fee": {
             "upto_2000": 15,
@@ -652,6 +680,34 @@
           "net_bdt_per_month": -6355,
           "viable": false,
           "copay_needed_to_break_even_bdt": 12
+        },
+        {
+          "key": "worker_only_slab",
+          "worker_fee": {
+            "upto_2000": 30,
+            "upto_5000": 50,
+            "above_5000": 70
+          },
+          "employer_copay_bdt": 0.0,
+          "payroll_fee_pepm_bdt": 0.0,
+          "recommended": false,
+          "avg_worker_fee_bdt": 41.64,
+          "revenue": {
+            "worker": 23113,
+            "employer_copay": 0,
+            "payroll_fee": 0,
+            "total": 23113
+          },
+          "costs": {
+            "loss": 17008,
+            "capital": 8485,
+            "idle": 2093,
+            "ops": 2775,
+            "total": 30361
+          },
+          "net_bdt_per_month": -7248,
+          "viable": false,
+          "copay_needed_to_break_even_bdt": 14
         },
         {
           "key": "recommended_mix",
