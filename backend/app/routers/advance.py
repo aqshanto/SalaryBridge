@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.config import get_settings
+from app.observability import METRICS
 from app.routers.ops import run
 from app.routers.sim import get_session
 from app.services import advances
@@ -42,6 +43,7 @@ def offer(body: OfferIn, session: SimSession = Depends(get_session)) -> dict:
         out = decide(session, body.employee_id, body.amount_bdt, get_settings().policy).to_dict()
     except DecisionError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    METRICS.decision(out["status"])
     facts = facts_for(out, get_settings().policy)
     out["explanation"] = {"en": template(facts, "en"), "bn": template(facts, "bn"), "source": "template", "points": facts["points"]}
     return out
