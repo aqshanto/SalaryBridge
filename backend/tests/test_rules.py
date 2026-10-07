@@ -7,7 +7,7 @@ import pytest
 from app.config import PolicyParams
 from app.rules import EmployeeContext, EmployerContext, HistoryContext, RequestContext, due_date_for, evaluate, fee_for
 
-POLICY = PolicyParams()
+POLICY = PolicyParams(advance_window_start_day=1)  # day-20 window has its own test
 EMPLOYER = EmployerContext("E001", payroll_day=1)
 RAHIM = EmployeeContext("E001-0001-00001", salary_bdt=18_000, hire_date=date(2023, 9, 1))
 OCT_25 = date(2026, 10, 25)
@@ -175,3 +175,11 @@ def test_attendance_feed_lowers_earned_days():
     absent = run(5_000, as_of=date(2026, 10, 10), earned_days=6)
     assert absent.hard_cap_bdt < full.hard_cap_bdt
     assert "ATTENDANCE_ADJUSTED" in [t.code for t in absent.trace]
+
+
+def test_advances_open_on_day_20():
+    policy = PolicyParams(advance_window_start_day=20)
+    early = run(5_000, as_of=date(2026, 10, 12), policy=policy)
+    assert not early.eligible and "TOO_EARLY_IN_MONTH" in early.decline_codes
+    on_day = run(5_000, as_of=date(2026, 10, 20), policy=policy)
+    assert on_day.eligible and on_day.hard_cap_bdt == 3_600  # full 20% of an 18,000 salary

@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from app.config import get_settings
 from app.integrations import payroll
+from app.services import advances
 from app.routers.sim import get_session
 from app.sim import settlement
 from app.sim.personas import personas_for
@@ -75,6 +76,30 @@ def employers(session: SimSession = Depends(get_session)) -> list[dict]:
         for eid, e in session.world.employers.iterrows()
     ]
     return sorted(rows, key=lambda r: (r["persona"] is None, r["employer_id"]))
+
+
+@router.get("/{employer_id}/pending")
+def pending(employer_id: str, session: SimSession = Depends(get_session)) -> list[dict]:
+    """Accepted advances waiting for HR confirmation before upay pays out."""
+    _check(session, employer_id)
+    names = _names(session)
+    rows = advances.awaiting_for_employer(session, employer_id)
+    for r in rows:
+        r["name"] = names.get(r["employee_id"], r["employee_id"])
+    return rows
+
+
+@router.post("/{employer_id}/pending/{decision_id}/{action}")
+def decide_pending(employer_id: str, decision_id: str, action: str, session: SimSession = Depends(get_session)) -> dict:
+    _check(session, employer_id)
+    if action not in ("confirm", "decline"):
+        raise HTTPException(status_code=404, detail="action must be confirm or decline")
+    try:
+        return advances.employer_decide(session, employer_id, decision_id, action == "confirm")
+    except advances.ConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except advances.AdvanceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/{employer_id}/staff")

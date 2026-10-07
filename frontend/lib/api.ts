@@ -27,6 +27,8 @@ export async function api<T>(path: string, sessionId: string, init: RequestInit 
 export const post = <T,>(path: string, sessionId: string, body: unknown = {}) =>
   api<T>(path, sessionId, { method: "POST", body: JSON.stringify(body) });
 
+export type AdvanceFlow = { paid_out_bdt: number; recovered_payroll_bdt: number; recovered_wallet_bdt: number; outstanding_bdt: number; fees_bdt: number; written_off_bdt: number };
+
 export type LedgerBalances = {
   upay_capital: number;
   upay_pool: number;
@@ -56,6 +58,7 @@ export type SimState = {
     loss_provision_bdt: number;
   };
   ledger: { reconciled: boolean; entries: number; total_paisa: number; balances_bdt: LedgerBalances };
+  advance_flow?: AdvanceFlow;
 };
 
 export type SimEvent = {
@@ -106,7 +109,8 @@ export type Decision = {
   explanation: Explanation;
 };
 
-export type Accepted = { advance_id: string; amount_bdt: number; fee_bdt: number; total_due_bdt: number; due_date: string; wallet_balance_bdt: string };
+export type PendingAdvance = { decision_id: string; employee_id: string; name: string; requested_on: string; amount_bdt: number; fee_bdt: number; total_due_bdt: number; repayment_date: string };
+export type Accepted = { status?: string; advance_id?: string; amount_bdt: number; fee_bdt: number; total_due_bdt: number; due_date: string; wallet_balance_bdt: string };
 
 export type HistoryItem = {
   advance_id: string;

@@ -42,6 +42,8 @@ class PolicyParams(BaseModel):
     cooling_off_consecutive_months: int = 3
     cooling_off_months: int = 1
     dependency_lookback_months: int = 6
+    advance_window_start_day: int = 20
+    employer_confirmation_required: bool = True
     dependency_months_threshold: int = 4
     dependency_limit_reduction_pct: float = 50.0
 

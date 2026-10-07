@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from datetime import date, timedelta
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, update
 
 from app.ledger import bdt_to_paisa, paisa_to_bdt
 from app.rules import fee_for
@@ -109,7 +109,48 @@ def accept(session: SimSession, decision_id: str) -> dict:
     if row["status"] != "offered":
         raise ConflictError(f"Only offered decisions can be accepted; this one is {row['status']}")
     _check_fresh(session, row)
+    if session.settings.policy.employer_confirmation_required:
+        # The employee has accepted; upay pays out only after the employer's HR confirms (employer_decide).
+        with session.engine.begin() as conn:
+            conn.execute(update(sim_decisions).where(sim_decisions.c.decision_id == decision_id).values(status="awaiting"))
+        return {
+            "status": "awaiting_employer",
+            "decision_id": decision_id,
+            "employee_id": output["employee_id"],
+            "amount_bdt": int(output["approved_amount_bdt"]),
+            "fee_bdt": fee_for(int(output["approved_amount_bdt"]), session.settings.policy),
+            "total_due_bdt": int(output["approved_amount_bdt"]) + fee_for(int(output["approved_amount_bdt"]), session.settings.policy),
+            "due_date": output["repayment_date"],
+            "wallet_balance_bdt": paisa_to_bdt(session.ledger.balance(f"employee_wallet:{output['employee_id']}")),
+        }
     return _pay_out(session, output, int(output["approved_amount_bdt"]), "accepted", "employee", None)
+
+
+def awaiting_for_employer(session: SimSession, employer_id: str) -> list[dict]:
+    """Accepted advances waiting for this employer's HR confirmation (no risk information)."""
+    with session.engine.connect() as conn:
+        rows = conn.execute(select(sim_decisions).where(sim_decisions.c.status == "awaiting").order_by(sim_decisions.c.decision_id)).all()
+    out = []
+    for r in rows:
+        output = json.loads(r.payload)["output"]
+        if output["employer_id"] != employer_id:
+            continue
+        amount = int(output["approved_amount_bdt"])
+        fee = fee_for(amount, session.settings.policy)
+        out.append({"decision_id": r.decision_id, "employee_id": r.employee_id, "requested_on": r.sim_date.isoformat(), "amount_bdt": amount, "fee_bdt": fee, "total_due_bdt": amount + fee, "repayment_date": output["repayment_date"]})
+    return out
+
+
+def employer_decide(session: SimSession, employer_id: str, decision_id: str, confirm: bool) -> dict:
+    """HR confirms (upay pays out to the wallet) or declines an accepted advance."""
+    row, output = _load(session, decision_id)
+    if row["status"] != "awaiting" or output["employer_id"] != employer_id:
+        raise ConflictError("This advance is not waiting for this employer's confirmation")
+    if not confirm:
+        with session.engine.begin() as conn:
+            conn.execute(update(sim_decisions).where(sim_decisions.c.decision_id == decision_id).values(status="hr_declined"))
+        return {"decision_id": decision_id, "status": "hr_declined"}
+    return {"status": "paid", **_pay_out(session, output, int(output["approved_amount_bdt"]), "employer_confirmed", "employer", None)}
 
 
 def _note(note: str | None) -> str:

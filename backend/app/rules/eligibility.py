@@ -125,6 +125,14 @@ def evaluate(
     check("EMPLOYER_OPEN", "EMPLOYER_CLOSED", not employer.closed, "Employer is paying wages" if not employer.closed else "Employer has stopped paying wages")
     check("EMPLOYEE_ACTIVE", "EMPLOYEE_NOT_ACTIVE", employee.active, "Employee is on payroll" if employee.active else "Employee is no longer on payroll")
 
+    check(
+        "IN_ADVANCE_WINDOW",
+        "TOO_EARLY_IN_MONTH",
+        as_of.day >= policy.advance_window_start_day,
+        f"Advances open on day {policy.advance_window_start_day} of the month (today is day {as_of.day})",
+        day=as_of.day,
+        opens_on_day=policy.advance_window_start_day,
+    )
     tenure = (as_of - employee.hire_date).days
     check(
         "TENURE_OK",

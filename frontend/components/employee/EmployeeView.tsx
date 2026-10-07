@@ -106,6 +106,17 @@ function HistoryList({ items }: { items: HistoryItem[] }) {
 function Done({ accepted, before, onBack }: { accepted: Accepted; before: number; onBack: () => void }) {
   const { t, lang } = useSim();
   const wallet = useCountUp(before, Number(accepted.wallet_balance_bdt));
+  if (accepted.status === "awaiting_employer") {
+    return (
+      <Card className="text-center">
+        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-warn-soft text-2xl text-warn" aria-hidden>⏳</div>
+        <h2 className="text-lg font-semibold">{t.employee.awaitingTitle}</h2>
+        <p className="mt-3 text-sm text-muted">{t.employee.awaitingNote(money(accepted.amount_bdt, lang))}</p>
+        <p className="mt-2 text-sm text-muted">{t.employee.doneNote(money(accepted.total_due_bdt, lang), longDate(accepted.due_date, lang))}</p>
+        <button type="button" onClick={onBack} className="mt-4 text-sm font-medium text-accent hover:underline">{t.employee.back}</button>
+      </Card>
+    );
+  }
   return (
     <Card className="text-center">
       <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-good-soft text-2xl text-good" aria-hidden>
