@@ -83,6 +83,7 @@ export function LedgerPanel() {
             </div>
           ))}
         </dl>
+        {b.employers !== 0 && <p className="mt-3 text-xs text-muted">{t.ledger.payrollNote}</p>}
         <div className="mt-3 text-xs text-muted">{t.ledger.entries(state.ledger.entries)}</div>
       </div>
       <div className="rounded-lg border border-line bg-panel p-4">
