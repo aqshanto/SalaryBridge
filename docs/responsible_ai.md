@@ -75,3 +75,12 @@ Run everything: `.venv/Scripts/python.exe -m pytest` (from `backend/`). Quick lo
 - **The real LLM path has not been run against the live API** in this project (no key); only the template and a fake client are tested. Any failure falls back to the template.
 - **Regulatory status of earned-wage advances in Bangladesh is unknown**; a legal review is needed before any pilot.
 - Simulation state lives in temporary SQLite files that are deleted after the session TTL; there is no long-term retention policy because there is no real data.
+
+## Phase 2 additions
+
+| Control | Where | Guarded by |
+|---|---|---|
+| Employer headcount removed from M1, M2 and M3 (employer-size fairness gap 9.13 pp → 5.25 pp) | `FEATURES` in `app/ml/m1_employer.py`, `m2_repayment.py`, `m3_attrition.py` | `docs/validation_report.md` (T3 targets), `tests/test_responsible_ai.py` |
+| Dependency guard: habitual use (4 of 6 months) halves the limit and shows a savings nudge; never declines alone | `app/rules/eligibility.py` (`DEPENDENCY_NUDGE`) | `tests/test_rules.py::test_dependency_guard_halves_the_limit_for_habitual_use_with_gaps` |
+| Attendance changes earned wages only (rule input), never a model feature; only the employer's own staff accepted | `app/routers/employer.py` | `tests/test_employer.py::test_attendance_webhook_lowers_the_limit_and_rejects_other_staff` |
+| Metrics and access logs carry route templates, never employee IDs or bodies | `app/observability.py` | `tests/test_integration_ready.py::test_payroll_import_endpoint_and_metrics` |

@@ -43,6 +43,8 @@ fee per salary paid through upay is profitable in both worlds (+৳16,436 A / +�
 and on the Validation page. Responsible-AI controls and the test guarding each one:
 [`docs/responsible_ai.md`](docs/responsible_ai.md).
 
+**Phase 2 changes (judge feedback → change → evidence): [`docs/phase2_changes.md`](docs/phase2_changes.md).**
+
 Integration and scale (Phase 2): payroll/time-card adapters, `/metrics`, load-test numbers in [`docs/scalability.md`](docs/scalability.md).
 
 Demo script: [`docs/demo_script.md`](docs/demo_script.md) · deploy: [`docs/deploy.md`](docs/deploy.md).
