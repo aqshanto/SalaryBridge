@@ -1,13 +1,17 @@
 @import "tailwindcss";
 
+/* upay brand: navy #002447, yellow #FFC72C, logo blue #0F58A8 */
 :root {
-  --surface: #f6f7f9;
+  --brand-navy: #002447;
+  --brand-yellow: #ffc72c;
+  --brand-blue: #0f58a8;
+  --surface: #f5f7fb;
   --panel: #ffffff;
   --ink: #111827;
   --muted: #5b6474;
   --line: #e3e6eb;
-  --accent: #0e7c66;
-  --accent-soft: #e3f3ef;
+  --accent: #0f58a8;
+  --accent-soft: #e7eef8;
   --good: #137a3c;
   --good-soft: #e6f4ea;
   --warn: #9a5b00;
@@ -15,19 +19,20 @@
   --bad: #b42318;
   --bad-soft: #fde8e6;
   /* two-series categorical pair, validated with the dataviz palette checker (light) */
-  --series-a: #00876a;
-  --series-b: #6a4fd6;
+  --series-a: #0f58a8;
+  --series-b: #c26a00;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --brand-navy: #001a33;
     --surface: #0f1216;
     --panel: #171b21;
     --ink: #e8eaed;
     --muted: #9aa3b2;
     --line: #2a3038;
-    --accent: #3cc3a4;
-    --accent-soft: #12332c;
+    --accent: #5b9be6;
+    --accent-soft: #13263f;
     --good: #5fd18a;
     --good-soft: #143222;
     --warn: #f0b252;
@@ -35,8 +40,8 @@
     --bad: #ff8a80;
     --bad-soft: #3d1714;
     /* validated against the dark surface */
-    --series-a: #2aa588;
-    --series-b: #8b78ee;
+    --series-a: #5b9be6;
+    --series-b: #f0a63c;
   }
 }
 
@@ -56,6 +61,9 @@
   --color-bad-soft: var(--bad-soft);
   --color-series-a: var(--series-a);
   --color-series-b: var(--series-b);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-blue: var(--brand-blue);
   --font-sans: var(--font-geist-sans), var(--font-bengali), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
