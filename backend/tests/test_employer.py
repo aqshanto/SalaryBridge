@@ -111,3 +111,13 @@ def test_attendance_webhook_lowers_the_limit_and_rejects_other_staff(full_client
     after = full_client.post("/advance/offer", json={"employee_id": rahim["employee_id"], "amount_bdt": 20_000}, headers=h).json()
     assert after["hard_cap_bdt"] < before["hard_cap_bdt"]
     assert "ATTENDANCE_ADJUSTED" in [x["code"] for x in after["reasons"]]
+
+
+def test_demo_people_work_for_different_employers_and_staff_list_has_no_risk(full_client):
+    h = {"X-Session-Id": "staff-test-0001"}
+    full_client.post("/sim/reset", headers=h)
+    people = full_client.get("/personas", headers=h).json()
+    assert len({p["employer_id"] for p in people}) == 3
+    staff = full_client.get(f"/employer/{people[0]['employer_id']}/staff", headers=h).json()
+    assert staff[0]["name"] == people[0]["name"] and len(staff) > 10
+    assert not any(k in str(staff) for k in ("prob", "tier", "risk"))

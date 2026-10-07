@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useSim } from "@/components/SimProvider";
-import { api, post, type Accepted, type Decision, type EmployeeSummary, type Explanation, type HistoryItem, type Persona } from "@/lib/api";
+import { api, post, type Accepted, type Decision, type EmployeeSummary, type Explanation, type HistoryItem, type Persona, type EmployerOption, type StaffMember } from "@/lib/api";
 import { longDate, money, shortDate } from "@/lib/i18n";
 
 // A screen belongs to the simulation epoch it was opened in; any time move, scenario or reset returns to home.
@@ -128,7 +128,9 @@ export function EmployeeView() {
   const { t, lang, sessionId, version, epoch, demoEpoch, refresh } = useSim();
   const [personas, setPersonas] = useState<Persona[]>([]);
   // The chosen person belongs to the current Demo-mode epoch; Demo mode returns to Rahim.
-  const [choice, setChoice] = useState({ key: "rahim", demo: 0 });
+  // Deep link from the ops "All requests" table: /employee?employee=<staff id>
+  const [deepLink] = useState(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("employee")));
+  const [choice, setChoice] = useState({ key: deepLink ? `emp:${deepLink}` : "rahim", demo: 0 });
   const selected = choice.demo === demoEpoch ? choice.key : "rahim";
   const [summary, setSummary] = useState<EmployeeSummary | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -143,7 +145,34 @@ export function EmployeeView() {
     api<Persona[]>("/personas", sessionId).then(setPersonas).catch((e) => setError(String(e.message ?? e)));
   }, [sessionId]);
 
-  const person = personas.find((p) => p.key === selected);
+  const [employers, setEmployers] = useState<EmployerOption[]>([]);
+  const [pickEmployer, setPickEmployer] = useState("");
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [other, setOther] = useState<Persona | null>(
+    deepLink ? { key: `emp:${deepLink}`, name: deepLink, story: "", employee_id: deepLink, employer_id: "", industry: "", salary_bdt: 0, hire_date: "" } : null,
+  );
+
+  useEffect(() => {
+    if (!sessionId) return;
+    api<EmployerOption[]>("/employer", sessionId).then(setEmployers).catch(() => {});
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || !pickEmployer) return;
+    api<StaffMember[]>(`/employer/${pickEmployer}/staff`, sessionId).then(setStaff).catch(() => setStaff([]));
+  }, [sessionId, pickEmployer]);
+
+  const chooseOther = (id: string) => {
+    if (!id) return;
+    const member = staff.find((s) => s.employee_id === id);
+    const employer = employers.find((e) => e.employer_id === pickEmployer);
+    setOther({ key: `emp:${id}`, name: member?.name ?? id, story: "", employee_id: id, employer_id: pickEmployer, industry: employer?.industry ?? "", salary_bdt: member?.salary_bdt ?? 0, hire_date: member?.hire_date ?? "" });
+    pick(`emp:${id}`);
+  };
+
+  const person = selected.startsWith("emp:")
+    ? personas.find((p) => p.employee_id === selected.slice(4)) ?? (other && other.key === selected ? other : undefined)
+    : personas.find((p) => p.key === selected);
   // Show a summary only for the selected person (the previous person's stays hidden while loading).
   const current = summary && person && summary.employee_id === person.employee_id ? summary : null;
 
@@ -211,6 +240,30 @@ export function EmployeeView() {
           </button>
         ))}
       </div>
+
+      <details className="rounded-lg border border-line bg-panel px-3 py-2 text-sm" open={selected.startsWith("emp:")}>
+        <summary className="cursor-pointer font-medium">{t.employee.otherTitle}</summary>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs text-muted">{t.employee.employerPick}</span>
+            <select value={pickEmployer} onChange={(e) => { setPickEmployer(e.target.value); setStaff([]); }} className="mt-1 w-full rounded-md border border-line bg-panel px-2 py-1.5">
+              <option value="">{t.employee.pickPlaceholder}</option>
+              {employers.map((e) => (
+                <option key={e.employer_id} value={e.employer_id}>{e.employer_id} · {e.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs text-muted">{t.employee.staffPick}</span>
+            <select value={selected.startsWith("emp:") ? selected.slice(4) : ""} onChange={(e) => chooseOther(e.target.value)} disabled={!staff.length} className="mt-1 w-full rounded-md border border-line bg-panel px-2 py-1.5 disabled:opacity-50">
+              <option value="">{t.employee.pickPlaceholder}</option>
+              {staff.map((s) => (
+                <option key={s.employee_id} value={s.employee_id}>{s.name ? `${s.name} · ` : ""}{s.employee_id} · {money(s.salary_bdt, lang)}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </details>
 
       {error && <div className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad" role="alert">{error}</div>}
 

@@ -62,6 +62,11 @@ def find_personas(world: SeedWorld, start: date) -> list[Persona]:
     )
     out.append(Persona("rahim", "Rahim", "Garment worker, reliable employer, needs cash for a sick child", rahim["employee_id"], rahim["employer_id"], rahim["industry"], int(rahim["salary_bdt"]), str(rahim["hire_date"])[:10]))
 
+    # Karim: chronic borrower with advances in each of the last 3+ months.
+    chronic = emp[(emp["behaviour"] == "chronic") & (streak >= get_settings().policy.cooling_off_consecutive_months)]
+    retail = chronic[chronic["industry"] == "retail"]
+    karim = _pick(retail if not retail.empty else chronic, 22_000)
+
     # Shapla: newer staff at an employer the model rates as risky but not the worst (highest M1 risk
     # at or below SHAPLA_MAX_EMPLOYER_RISK), so the demo shows a smaller offer rather than a queue.
     model = m1.load_model()
@@ -76,6 +81,8 @@ def find_personas(world: SeedWorld, start: date) -> list[Persona]:
         for employer_id in risky:
             if risk[employer_id] < min_risk:
                 break
+            if employer_id in (rahim["employer_id"], karim["employer_id"]):
+                continue  # each demo person works for a different employer
             pool = emp[(emp["employer_id"] == employer_id) & emp["tenure"].between(lo, hi) & (emp["behaviour"] == "normal") & ~recent_any]
             if not pool.empty:
                 shapla = _pick(pool, 50_000)
@@ -84,10 +91,6 @@ def find_personas(world: SeedWorld, start: date) -> list[Persona]:
             break
     out.append(Persona("shapla", "Shapla", "Newer staff at an employer that often pays late", shapla["employee_id"], shapla["employer_id"], shapla["industry"], int(shapla["salary_bdt"]), str(shapla["hire_date"])[:10]))
 
-    # Karim: chronic borrower with advances in each of the last 3+ months.
-    chronic = emp[(emp["behaviour"] == "chronic") & (streak >= get_settings().policy.cooling_off_consecutive_months)]
-    retail = chronic[chronic["industry"] == "retail"]
-    karim = _pick(retail if not retail.empty else chronic, 22_000)
     out.append(Persona("karim", "Karim", "Has taken an advance every month for months", karim["employee_id"], karim["employer_id"], karim["industry"], int(karim["salary_bdt"]), str(karim["hire_date"])[:10]))
     return out
 

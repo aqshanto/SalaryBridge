@@ -63,6 +63,12 @@ def employer_risk(session: SimSession = Depends(get_session)) -> list[dict]:
     return employers.employer_table(session)
 
 
+@router.get("/requests")
+def requests(employee_id: str | None = None, limit: int = 200, session: SimSession = Depends(get_session)) -> list[dict]:
+    """All advance requests (decisions) in this sandbox, newest first; optionally one employee's."""
+    return ops_service.requests(session, employee_id, max(1, min(limit, 1000)))
+
+
 @router.get("/summary")
 def summary(session: SimSession = Depends(get_session)) -> dict:
     return ops_service.kpis(session)
