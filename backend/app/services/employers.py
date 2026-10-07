@@ -27,7 +27,7 @@ def exposure_by_employer(session: SimSession) -> dict[str, int]:
 TREND_DAYS = 30
 
 # M1 scores only change when the simulated date, the payroll runs or the closed employers change, so they are
-# cached per session state (the ops page asked for all ~60 employers twice on every load: ~4 s on the free plan).
+# cached by that state (the ops page asked for all ~60 employers twice on every load: ~4 s on the free plan).
 _CACHE: OrderedDict = OrderedDict()
 _CACHE_LOCK = threading.Lock()
 _CACHE_SIZE = 64
@@ -37,7 +37,8 @@ def _state_key(session: SimSession, closed: dict) -> tuple:
     t = sim_payroll_runs.c
     with session.engine.connect() as conn:
         runs = conn.execute(select(func.count(), func.sum(t.paid.cast(Integer)), func.sum(t.delay_days), func.sum(t.paid_share), func.group_concat(t.status))).one()
-    return (session.session_id, session.sim_date.isoformat(), tuple(sorted(closed)), *(runs[:4]), hash(runs[4]))
+    # No session id in the key: sessions in the same state (e.g. every fresh sandbox) share one entry.
+    return (session.sim_date.isoformat(), tuple(sorted(closed)), *(runs[:4]), hash(runs[4]))
 
 
 def employer_table(session: SimSession) -> list[dict]:
