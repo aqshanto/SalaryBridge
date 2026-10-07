@@ -12,7 +12,7 @@ plan and sleeps after 15 idle minutes, so the first request can take about a min
 |---|---|---|
 | ![Employee home](docs/screenshots/employee-home.png) | ![Offer](docs/screenshots/employee-offer.png) | ![Bangla offer](docs/screenshots/employee-offer-bn.png) |
 
-| Employer HR: one deduction list | upay ops: Eid surge pushes need above the pool |
+| Employer HR: confirm advances, one deduction list | upay ops: Eid surge pushes need above the pool |
 |---|---|
 | ![Employer HR](docs/screenshots/employer-hr.png) | ![Ops](docs/screenshots/ops-eid-surge.png) |
 
