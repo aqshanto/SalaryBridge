@@ -17,6 +17,24 @@ We are validating a **hypothesis**. We are not signing a real employer. Employer
 
 ---
 
+## Phase 2 plan (judge feedback, branch `phase2-feedback`, deadline 12:00)
+
+Phase 1 score 77.7/100. Work order: **1 → 2 → 3 → 6 → 4 → 5 → 7**, one commit per item, merged to `main` at the end. Tests are run only where a change needs them; the full suite runs at the end if time allows.
+
+| # | Item | Judge feedback it answers | Done when |
+|---|---|---|---|
+| 1 | **Fairness fix:** retrain M2/M3 without `employer_headcount`, re-run the fairness audit | AI/ML J1/J3, Responsible AI J1/J3 (9.13 pp employer-size gap) | New metrics + audit regenerated; before/after table in the report |
+| 2 | **Pricing engine:** employer co-pay, fee tiers, payroll-linked revenue; break-even per scenario | Business J1/J2/J3, Problem J1 (−৳10,876/month at ৳25) | API + Validation-page panel show at least one viable configuration |
+| 3 | **M4 recalibration:** separate conformal widening for Eid and non-Eid months | AI/ML J1 (over-conservative band in non-peak months) | T2-A coverage re-checked; before/after band width reported |
+| 6 | **upay brand colours** in the UI | Prototype J2 | Theme tokens updated, screenshots unchanged in layout |
+| 4 | **Dependency guard + attendance-driven limit:** repeat-use safeguard and a simulated attendance webhook that resizes the limit | Innovation J1/J2/J3, Responsible AI J3 | Rule + endpoint + test |
+| 5 | **Integration readiness:** payroll adapter interface (CSV/JSON), `/metrics`, short load test, Postgres-ready `DATABASE_URL` | Scalability J1/J2/J3 | Adapter + endpoint + load-test numbers in docs |
+| 7 | **`docs/phase2_changes.md`:** every judge comment → change → evidence; pilot plan, model ablation, security checklist | All categories | Doc linked from README |
+
+Out of scope today (stated honestly as next steps): real upay data, penetration testing, real KYC/wallet integration.
+
+---
+
 ## 1. Problem and hypothesis
 
 **Problem statement:** Salaried workers who run out of money before payday face an emergency (for example, 5,000 BDT on the 25th). That pushes them to informal lenders, or to ask their employer for an advance.

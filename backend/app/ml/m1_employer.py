@@ -27,7 +27,7 @@ from app.ml.common import ARTIFACTS_DIR, TRAIN_SEEDS, binary_metrics, load_artif
 from data.generator import INDUSTRIES, _add_months, generate
 
 MODEL_NAME = "m1_employer"
-VERSION = "m1-v1"
+VERSION = "m1-v2"
 DECISION_DAY = 20
 INDUSTRY_COLUMNS = [f"industry_{name}" for name in INDUSTRIES]
 FEATURES = [
@@ -42,7 +42,6 @@ FEATURES = [
     "max_delay_6m",
     "partial_6m",
     "months_since_late",
-    "headcount",
     "payroll_day",
     "pay_month",
     *INDUSTRY_COLUMNS,

@@ -49,13 +49,13 @@ ANALYST_NOTES: dict[str, str] = {
         "economics sliders). For real data: calibrate on a longer window or widen only for Eid months. Not tuned here, "
         "because tuning on the test result would make this check meaningless."
     ),
-    "T3-B-employer_size": (
-        "Not fully explained. In the lowest employer-risk band, approval is about the same for every employer size (table "
-        "above), so most of the overall gap comes from how many advances sit in the highest-risk band, which differs by size "
-        "in these synthetic worlds. In the middle band, staff of small employers are approved less often than staff of large "
-        "employers, on few advances. employer_headcount is a model feature, so a direct size effect cannot be ruled out. "
-        "Next step: retrain M2/M3 without employer_headcount and re-run this audit; until then, a person should review "
-        "requests in the 10-30% employer-risk band."
+    "T3-A-employer_size": (
+        "Explained. v2 removed employer headcount from M1, M2 and M3 (the v1 audit could not rule out a direct size effect). "
+        "Inside the lowest employer-risk band, approval is the same for every size (table above). The remaining gap is "
+        "driven by how many advances sit in the highest employer-risk band, and it now runs against large employers, whose "
+        "flat-cap loss rate is also the highest (table above); staff of small employers are approved most often. So the gap "
+        "follows observed employer payroll reliability, not size. Requests in the 10-30% employer-risk band, where groups "
+        "are small, stay eligible for human review."
     ),
 }
 

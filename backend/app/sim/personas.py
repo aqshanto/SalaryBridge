@@ -18,7 +18,8 @@ from app.rules.eligibility import consecutive_months_before
 from app.sim.world import SeedWorld, load_world
 
 
-SHAPLA_MAX_EMPLOYER_RISK = 0.30
+SHAPLA_MAX_EMPLOYER_RISK = 0.36  # m1-v2 separates employers more sharply; no employer sits between 0.10 and 0.30
+SHAPLA_MIN_EMPLOYER_RISK = 0.10  # below this the employer would not look risky in the demo
 
 
 @dataclass(frozen=True)
@@ -69,10 +70,17 @@ def find_personas(world: SeedWorld, start: date) -> list[Persona]:
         runs = world.payroll_runs[world.payroll_runs["employer_id"] == eid]
         risk[eid] = float(model.predict_proba(pd.DataFrame([m1.employer_features(employer, runs, start, get_settings().policy.grace_days)]))[0])
     risky = sorted((e for e in risk if risk[e] <= SHAPLA_MAX_EMPLOYER_RISK), key=lambda e: (-risk[e], e))
-    for employer_id in risky:
-        pool = emp[(emp["employer_id"] == employer_id) & emp["tenure"].between(100, 240) & (emp["behaviour"] == "normal") & ~recent_any]
-        if not pool.empty:
-            shapla = _pick(pool, 50_000)
+    shapla = None
+    # Prefer a genuinely risky employer; widen the tenure window before falling back to a low-risk one.
+    for lo, hi, min_risk in ((100, 240, SHAPLA_MIN_EMPLOYER_RISK), (60, 400, SHAPLA_MIN_EMPLOYER_RISK), (100, 240, 0.0)):
+        for employer_id in risky:
+            if risk[employer_id] < min_risk:
+                break
+            pool = emp[(emp["employer_id"] == employer_id) & emp["tenure"].between(lo, hi) & (emp["behaviour"] == "normal") & ~recent_any]
+            if not pool.empty:
+                shapla = _pick(pool, 50_000)
+                break
+        if shapla is not None:
             break
     out.append(Persona("shapla", "Shapla", "Newer staff at an employer that often pays late", shapla["employee_id"], shapla["employer_id"], shapla["industry"], int(shapla["salary_bdt"]), str(shapla["hire_date"])[:10]))
 
